@@ -10,7 +10,6 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
 #include <avr/sleep.h>
 
 #include "quad.h"
@@ -21,7 +20,7 @@
 #define IR_BURST_LEN   32
 #define IR_BIT_0       32
 #define IR_BIT_1       64
-#define IR_FINAL_PAUSE 30 * IR_BIT_1
+#define IR_FINAL_PAUSE 255
 #define IR_DEBUG_BIT   (1<<1)  // Nice to trigger the scope on.
 
 #define ROT_PORT_OUT PORTD
@@ -37,11 +36,11 @@ enum SendState {
     FINAL_PAUSE, // time between data segments
     SENDER_IDLE,
 };
-static volatile enum SendState send_state = SENDER_IDLE;
+register enum SendState send_state asm("r13");
 
 static volatile uint32_t data_to_send;
 static volatile uint32_t current_bit;
-static volatile uint16_t countdown;
+register uint8_t countdown asm("r12");
 
 // Send a 32Bit value.
 // - Start with a long burst cycle burst on.
@@ -57,6 +56,18 @@ void Send(uint32_t value) {
     TIMSK |= (1<<OCIE2);  // Go
 }
 
+void advanceStateBottomHalf();
+
+// Check if sending is done. Needs to be called regularly after a Send()
+// has been issued.
+bool PollIsSendingDone() {
+    if (send_state == SENDER_IDLE)
+        return true;
+    if (countdown == 0)
+        advanceStateBottomHalf();
+    return false;
+}
+
 // Send a 4 letter string.
 void SendArray(const char str[4]) {
     uint32_t value = 0;
@@ -67,15 +78,7 @@ void SendArray(const char str[4]) {
     Send(value);
 }
 
-ISR(TIMER2_COMP_vect) {
-    if (countdown != 0) {
-        if (send_state == BIT_BURST) {
-            IR_OUT_PORT ^= IR_OUT_BIT;
-        }
-        --countdown;
-        return;
-    }
-
+void advanceStateBottomHalf() {    
     if (send_state == FINAL_PAUSE) {
         TIMSK &= ~(1<<OCIE2);       // Disable interrupt. We are done.
         IR_OUT_PORT &= ~(IR_DEBUG_BIT|IR_OUT_BIT);
@@ -99,12 +102,21 @@ ISR(TIMER2_COMP_vect) {
     }
 }
 
+ISR(TIMER2_COMP_vect) {
+    if (!countdown) return;
+    if (send_state == BIT_BURST) {
+        IR_OUT_PORT ^= IR_OUT_BIT;
+    }
+    --countdown;
+}
+
 static bool is_button_pressed() { return (ROT_PORT_IN & ROT_BUTTON) == 0; }
 static uint8_t rot_status() {
     return ((ROT_PORT_IN & ROT_B) ? 10 : 00) | ((ROT_PORT_IN & ROT_A) ? 1 : 0);
 }
 
 int main() {
+    send_state = SENDER_IDLE;
     IR_OUT_DATADIR |= IR_OUT_BIT|IR_DEBUG_BIT;
     TCCR2= ((1<<CS20)      // no prescaling p.116
             | (1<<WGM21)   // OCR2 compare. p.115
@@ -122,7 +134,7 @@ int main() {
         const bool new_button_status = is_button_pressed();
     
         // If sender status is free, send our status.
-        if (send_state == SENDER_IDLE) {
+        if (PollIsSendingDone()) {
             if (rot_pos > 0) {
                 SendArray("more");
                 --rot_pos;
@@ -140,7 +152,7 @@ int main() {
         }
 #if 0
         // Nothing to send ? Go back to sleep. Does not work yet properly.
-        if (send_state == SENDER_IDLE) {
+        if (PollIsSendingDone()) {
             GICR |= (1<<INT1)|(1<<INT0);
             MCUCR = ((1<<SE)|    // Sleep enable
                      (1<<SM1)    // Power down
