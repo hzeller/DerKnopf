@@ -51,8 +51,8 @@ void Send(uint32_t value) {
     send_state = BIT_BURST;
     countdown = 2 * IR_BURST_LEN;  // We make the first burst double the length.
     OCR2 = F_CPU / (2*38000);      // Need double transmit frequency for one cylcle.
-    TCNT2 = 0;
     IR_OUT_PORT |= IR_DEBUG_BIT;
+    TCNT2 = 0;
     TIMSK |= (1<<OCIE2);  // Go
 }
 
