@@ -2,20 +2,31 @@
  * Copyright (c) h.zeller@acm.org. GNU public License.
  *
  * Receiver for 'DerKnopf'
+ *
+ * TODO: switch ISR use from output to input. Instead of using the ISR for motor pulses, we
+ * should use it to receive and precisely measure infrared input.
  */
 
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-
-#include "serial-com.h"
+#include <util/delay.h>
 
 #define IN_IR (1<<5)
 
-static void printCRLF(SerialCom *out) {
-    out->write('\r');
-    out->write('\n');
-}
+#define MOT_PORT PORTD
+#define MOT_DIRECTION DDRD
+#define MOT_A0 (1<<4)
+#define MOT_A1 (1<<5)
+#define MOT_B0 (1<<6)
+#define MOT_B1 (1<<7)
+
+uint8_t motor_cycle[] = {
+    (MOT_A0 | MOT_B0),
+    (MOT_A0 | MOT_B1),
+    (MOT_A1 | MOT_B1),
+    (MOT_A1 | MOT_B0),
+};
 
 static inline bool infrared_in() { return (PINC & IN_IR) != 0; }
 
@@ -59,16 +70,69 @@ static uint8_t read_infrared(uint8_t *buffer) {
     return read;
 }
 
+volatile bool reverse;
+volatile uint8_t remaining_steps;
+volatile uint8_t global_steps;
+
+inline bool motor_busy() { return remaining_steps != 0; }
+void InitMotor() {
+    TCCR2= ((1<<CS22)|(1<<CS21)|(1<<CS20) // prescaling 1024 p.116
+            | (1<<WGM21)   // OCR2 compare. p.115
+            );
+    remaining_steps = 0;
+    global_steps = 0;
+    MOT_DIRECTION = MOT_A0|MOT_A1|MOT_B0|MOT_B1;
+    sei();
+}
+
+// Turn motor the number of steps. Don't call when remaining_steps != 0
+void TurnMotor(int8_t steps) {
+    if (steps < 0) {
+        remaining_steps = -4 * steps;
+        reverse = true;
+    } else {
+        remaining_steps = 4 * steps;
+        reverse = false;
+    }
+    OCR2 = (F_CPU / 1024) / 200;
+    TCNT2 = 0;
+    TIMSK |= (1<<OCIE2);  // Go
+}
+
+ISR(TIMER2_COMP_vect) {
+    if (remaining_steps == 0) {
+        TIMSK &= ~(1<<OCIE2);       // Disable interrupt. We are done.
+        MOT_PORT = 0;
+        return;
+    }
+    if (reverse) {
+        --global_steps;
+    } else {
+        ++global_steps;
+    }
+    MOT_PORT = motor_cycle[global_steps % 4];
+    --remaining_steps;
+}
+
 int main() {
-    SerialCom comm;
+    InitMotor();
     uint8_t buffer[4];
 
+    int8_t motor_steps = 0;
     for (;;) {
         if (!infrared_in() && read_infrared(buffer) == 4) {
-            for (uint8_t i = 0; i < 4; ++i) {
-                comm.write(buffer[i]);
+            if (buffer[0] == 'm' && buffer[1] == 'o' && buffer[2] == 'r' && buffer[3] == 'e') {
+                ++motor_steps;
             }
-            printCRLF(&comm);
+            else if (buffer[0] == 'l' && buffer[1] == 'e' && buffer[2] == 's' && buffer[3] == 's') {
+                --motor_steps;
+            }
+        }
+
+        // Turn motor, but only if it is not still busy. While busy, we just collect new steps
+        if (motor_steps != 0 && !motor_busy()) {
+            TurnMotor(3 * motor_steps);
+            motor_steps = 0;
         }
     }
 }

@@ -10,7 +10,7 @@ AVRDUDE_DEVICE ?= /dev/ttyUSB0
 AVRDUDE     = avrdude -p m8 -c stk500v2 -P $(AVRDUDE_DEVICE)
 FLASH_CMD   = $(AVRDUDE) -e -U flash:w:main.hex
 LINK=avr-g++ -g $(TARGET_ARCH) -Wl,-gc-sections
-OBJECTS=receiver.o serial-com.o
+OBJECTS=receiver.o
 
 all : main.hex
 
