@@ -29,6 +29,14 @@
 #define ROT_A        (1<<3)   // Also INT1 to wakeup
 #define ROT_B        (1<<4)
 
+// The commands we send are just a 32 bit values. For easier debugging, make that some text :)
+#define MK_COMMAND(a, b, c, d) ((uint32_t)a << 24 | (uint32_t)b << 16 | (uint32_t)c << 8 | d)
+#define COMMAND_MORE MK_COMMAND('m', 'o', 'r', 'e')  // Knob turned right
+#define COMMAND_LESS MK_COMMAND('l', 'e', 's', 's')  // Knob turned left
+#define COMMAND_B_ON MK_COMMAND('b', '_', 'o', 'n')  // Button pressed
+#define COMMAND_BOFF MK_COMMAND('b', 'o', 'f', 'f')  // Button released
+#define COMMAND_BHLD MK_COMMAND('b', 'h', 'l', 'd')  // Button kept pressing
+
 // Sending. All happens in an interrupt set up to fire in 2*38kHz
 enum SendState {
     BIT_BURST,   // the burst at the beginning of a bit (longer initially)
@@ -36,15 +44,17 @@ enum SendState {
     FINAL_PAUSE, // time between data segments
     SENDER_IDLE,
 };
+// State used in the ISR. To save time and space, we assign these to global registers.
 register enum SendState send_state asm("r13");
-
-static volatile uint32_t data_to_send;
-static volatile uint32_t current_bit;
 register uint8_t countdown asm("r12");
 
+static uint32_t data_to_send;
+static uint32_t current_bit;
+
 // Send a 32Bit value.
-// - Start with a long burst cycle burst on.
-// - 32 times { bit[i] ? pause32 : pause16 ; burst16 }
+// "value" is the 32 bit value to send, typically just letters for easier debugging :)
+// If "alternate_channel" is set, the first letter is made uppdercase
+// letter is
 void Send(uint32_t value) {
     data_to_send = value;
     current_bit = 0x80000000;
@@ -66,16 +76,6 @@ bool PollIsSendingDone() {
     if (countdown == 0)
         advanceStateBottomHalf();
     return false;
-}
-
-// Send a 4 letter string.
-void SendArray(const char str[4]) {
-    uint32_t value = 0;
-    value |= (uint32_t)str[0] << 24;
-    value |= (uint32_t)str[1] << 16;
-    value |= (uint32_t)str[2] << 8;
-    value |= (uint32_t)str[3];
-    Send(value);
 }
 
 void advanceStateBottomHalf() {
@@ -138,17 +138,17 @@ int main() {
         // If sender status is free, send our status.
         if (PollIsSendingDone()) {
             if (rot_pos > 0) {
-                SendArray("more");
+                Send(COMMAND_MORE);
                 --rot_pos;
             }
             else if (rot_pos < 0) {
-                SendArray("less");
+                Send(COMMAND_LESS);
                 ++rot_pos;
             }
             else {
-                if (!last_button_sent_status && new_button_status) SendArray("b_on");
-                if (last_button_sent_status && !new_button_status) SendArray("boff");
-                if (last_button_sent_status && new_button_status)  SendArray("bhld");
+                if (!last_button_sent_status && new_button_status) Send(COMMAND_B_ON);
+                if (last_button_sent_status && !new_button_status) Send(COMMAND_BOFF);
+                if (last_button_sent_status && new_button_status)  Send(COMMAND_BHLD);
                 last_button_sent_status = new_button_status;
             }
         }
