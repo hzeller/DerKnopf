@@ -78,7 +78,9 @@ void SendArray(const char str[4]) {
     Send(value);
 }
 
-void advanceStateBottomHalf() {    
+void advanceStateBottomHalf() {
+    // Note, we need to set the state _before_ setting the countdown. The interrupt is still
+    // running and polling send_state - so this results in race-conditions.
     if (send_state == FINAL_PAUSE) {
         TIMSK &= ~(1<<OCIE2);       // Disable interrupt. We are done.
         IR_OUT_PORT &= ~(IR_DEBUG_BIT|IR_OUT_BIT);
@@ -86,18 +88,18 @@ void advanceStateBottomHalf() {
     }
     else if (send_state == BIT_BURST) {  // We just sent a burst, now encode some data
         if (current_bit == 0) {
-            countdown = IR_FINAL_PAUSE;   // We ran out of data. Send final pause between packets.
-            IR_OUT_PORT &= ~(IR_DEBUG_BIT);
             send_state = FINAL_PAUSE;
+            IR_OUT_PORT &= ~(IR_OUT_BIT|IR_DEBUG_BIT);  // Switch off debug scope trigger.
+            countdown = IR_FINAL_PAUSE;   // We ran out of data. Send final pause between packets.
         } else {
-            countdown = (current_bit & data_to_send) ? IR_BIT_1 : IR_BIT_0;
-            IR_OUT_PORT &= ~(IR_OUT_BIT);
             send_state = BIT_PAUSE;
+            IR_OUT_PORT &= ~(IR_OUT_BIT);
+            countdown = (current_bit & data_to_send) ? IR_BIT_1 : IR_BIT_0;
         }
     }
     else {
-        countdown = IR_BURST_LEN;
         send_state = BIT_BURST;
+        countdown = IR_BURST_LEN;
         current_bit >>= 1;
     }
 }
