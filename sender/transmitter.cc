@@ -4,7 +4,8 @@
  * Transmitter for 'DerKnopf'
  *   - react on interrupt, waking up when reading the encoder
  *   - send stuff via infrared, 38kHz encoded.
- *   - Infrared receivers like a particular burst width, so we encode the bits in the spacing.
+ *   - Infrared receivers like a particular burst width, so we encode the bits
+ *     in the spacing.
  *     (this gives a variable length encoding, but we don't care).
  */
 
@@ -14,6 +15,7 @@
 
 #include "quad.h"
 
+#define IR_FREQ        38000  // Frequency of IR carrier
 #define IR_OUT_PORT    PORTB
 #define IR_OUT_DATADIR DDRB
 #define IR_OUT_BIT     (1<<0)
@@ -29,8 +31,9 @@
 #define ROT_A        (1<<3)   // Also INT1 to wakeup
 #define ROT_B        (1<<4)
 
-// The commands we send are just a 32 bit values. For easier debugging, make that some text :)
-#define MK_COMMAND(a, b, c, d) ((uint32_t)a << 24 | (uint32_t)b << 16 | (uint32_t)c << 8 | d)
+// The commands we send are just a 32 bit values. Make that some text :)
+#define MK_COMMAND(a, b, c, d) \
+        ((uint32_t)a << 24 | (uint32_t)b << 16 | (uint32_t)c << 8 | d)
 #define COMMAND_MORE MK_COMMAND('m', 'o', 'r', 'e')  // Knob turned right
 #define COMMAND_LESS MK_COMMAND('l', 'e', 's', 's')  // Knob turned left
 #define COMMAND_B_ON MK_COMMAND('b', '_', 'o', 'n')  // Button pressed
@@ -44,7 +47,8 @@ enum SendState {
     FINAL_PAUSE, // time between data segments
     SENDER_IDLE,
 };
-// State used in the ISR. To save time and space, we assign these to global registers.
+// State used in the ISR. To save time and space, we assign these to global
+// registers.
 register enum SendState send_state asm("r13");
 register uint8_t countdown asm("r12");
 
@@ -52,15 +56,14 @@ static uint32_t data_to_send;
 static uint32_t current_bit;
 
 // Send a 32Bit value.
-// "value" is the 32 bit value to send, typically just letters for easier debugging :)
-// If "alternate_channel" is set, the first letter is made uppdercase
-// letter is
+// "value" is the 32 bit value to send, typically just letters for easier
+// debugging :)
 void Send(uint32_t value) {
     data_to_send = value;
     current_bit = 0x80000000;
     send_state = BIT_BURST;
     countdown = 2 * IR_BURST_LEN;  // We make the first burst double the length.
-    OCR2 = F_CPU / (2*38000);      // Need double transmit frequency for one cylcle.
+    OCR2 = F_CPU / (2*IR_FREQ);  // Need double transmit frequency for one cycle
     IR_OUT_PORT |= IR_DEBUG_BIT;
     TCNT2 = 0;
     TIMSK |= (1<<OCIE2);  // Go
@@ -79,18 +82,19 @@ bool PollIsSendingDone() {
 }
 
 void advanceStateBottomHalf() {
-    // Note, we need to set the state _before_ setting the countdown. The interrupt is still
-    // running and polling send_state - so this results in race-conditions.
+    // Note, we need to set the state _before_ setting the countdown.
+    // The interrupt is still running and polling send_state - so this results
+    // in race-conditions.
     if (send_state == FINAL_PAUSE) {
         TIMSK &= ~(1<<OCIE2);       // Disable interrupt. We are done.
         IR_OUT_PORT &= ~(IR_DEBUG_BIT|IR_OUT_BIT);
         send_state = SENDER_IDLE;  // External observers might be interested.
     }
-    else if (send_state == BIT_BURST) {  // We just sent a burst, now encode some data
+    else if (send_state == BIT_BURST) {  // Just sent burst, now encode data
         if (current_bit == 0) {
             send_state = FINAL_PAUSE;
-            IR_OUT_PORT &= ~(IR_OUT_BIT|IR_DEBUG_BIT);  // Switch off debug scope trigger.
-            countdown = IR_FINAL_PAUSE;   // We ran out of data. Send final pause between packets.
+            IR_OUT_PORT &= ~(IR_OUT_BIT|IR_DEBUG_BIT);
+            countdown = IR_FINAL_PAUSE;   // Ran out of data. Final pause.
         } else {
             send_state = BIT_PAUSE;
             IR_OUT_PORT &= ~(IR_OUT_BIT);
@@ -128,10 +132,10 @@ int main() {
 
     QuadDecoder rotary;
     int rot_pos = 0;
-    bool last_button_sent_status = false;
+    bool last_button_status = false;
     for (;;) {
-        // We accumulate the state here, so that we can send it possibly slower than
-        // they are generated.
+        // We accumulate the state here, so that we can send it possibly slower
+        // than they are generated.
         rot_pos += rotary.UpdateEnoderState(rot_status());
         const bool new_button_status = is_button_pressed();
     
@@ -146,10 +150,10 @@ int main() {
                 ++rot_pos;
             }
             else {
-                if (!last_button_sent_status && new_button_status) Send(COMMAND_B_ON);
-                if (last_button_sent_status && !new_button_status) Send(COMMAND_BOFF);
-                if (last_button_sent_status && new_button_status)  Send(COMMAND_BHLD);
-                last_button_sent_status = new_button_status;
+                if (!last_button_status && new_button_status) Send(COMMAND_B_ON);
+                if (last_button_status && !new_button_status) Send(COMMAND_BOFF);
+                if (last_button_status && new_button_status)  Send(COMMAND_BHLD);
+                last_button_status = new_button_status;
             }
         }
 #if 0
