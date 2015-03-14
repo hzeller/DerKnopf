@@ -35,6 +35,18 @@ flash: main.hex
 eeprom-flash: eeprom.hex
 	$(AVRDUDE) -U eeprom:w:eeprom.hex
 
+%.eps: %.fig
+	fig2dev -L eps $< $@
+
+%.svg: %.fig
+	fig2dev -L svg $< $@
+
+%.dxf: %.eps
+	pstoedit -psarg "-r300x300" -dt -f dxf:-polyaslines $< $@
+
+bottom.dxf: bottom.fig
+bottom.svg: bottom.fig
+
 clean:
 	rm -f $(OBJECTS) main.elf main.hex
 

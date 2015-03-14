@@ -13,6 +13,8 @@ total_height=28;
 vertical_divide=15;
 knob_overlap=6;
 bottom_thick=3.2;  // acrylic
+led_dia=5.6;
+led_front=4.5;
 
 module battery(length=batt_len, dia=batt_dia,negatives=true) {
     translate([-batt_len/2,0,0]) {
@@ -20,7 +22,7 @@ module battery(length=batt_len, dia=batt_dia,negatives=true) {
 	translate([0,-dia/2,0]) cube([length, dia, dia/2]);
 	if (negatives) {
 	    // Contact blades
-	    translate([0,-0.6*dia,1/8*dia]) cube([1, 1.4*dia, 3/4 * dia]);
+	    translate([0,-0.6*dia,1/8*dia]) cube([1, 30, 3/4 * dia]);
 	    translate([batt_len-1,-0.6*dia,1/8*dia]) cube([1, 1.4*dia, 3/4 * dia]);
 	    
 	    translate([0,-0.5,dia/4]) rotate([90,0,0]) translate([0,0,-dia/2]) {
@@ -40,7 +42,7 @@ module remote_control(l=37, w=pcb_width, h=9,negatives=true) {
 	}
 	cylinder(r=9/2 + clearance, h=h + 6.8);  // mount shaft
 
-	// madenschraube
+	// set screw
 	translate([0,0,h + 10]) rotate([-90, 0, 0]) union() {
 	    cylinder(r=3.2/2, h=50);
 	    translate([0,0,3]) {
@@ -49,14 +51,23 @@ module remote_control(l=37, w=pcb_width, h=9,negatives=true) {
 		translate([-5.5/2,0,0]) cube([5.5, 6, 2.6]);
 	    }
 	    translate([0,0,9.5]) {
+		// Space to drop screw in.
 		cylinder(r=6/2, h=12);
 		translate([0,0,12-4]) translate([-6/2,0,0]) cube([6, 7, 4]);
 		translate([-3/2,0,0]) cube([3, 7, 12]);
 	    }
 	}
-	translate([0,0,h + 1.2]) cylinder(r=15/2 + clearance, h=3);  // mount gear
-	// Punch-through for cables.
-	translate([0,0,h-1.5-epsilon]) cube([l+15, 4, 3], center=true);
+
+	// Mounting gear on encoder
+	translate([0,0,h + 1.2]) cylinder(r=15/2 + clearance, h=3);
+	// Retainer clip for encoder
+	translate([6, -3/2, 0]) cube([2, 3, h+3]);
+
+	// Infrared diodes
+	// Mounting holes
+	translate([0,0,led_dia/2-2]) rotate([0,90,0]) translate([0,0,-33]) cylinder(r=led_dia/2, h=66);
+	// Front - a bit tighter.
+	translate([0,0,led_dia/2-2]) rotate([0,90,0]) translate([0,0,-35]) cylinder(r=led_front/2, h=70);
     }
 }
 
@@ -83,8 +94,14 @@ module item_blocks(negatives=true, offset=0) {
     remote_control(negatives=negatives);
 }
 
-module bottom(h=bottom_thick, smaller=0) {
-    cylinder(r=(diameter - 0)/2 - smaller, h=h - smaller);
+module bottom(h=bottom_thick, larger=0, fudge=1.246) {
+    echo("Bottom diameter", (diameter - 0)/2 - larger);
+    //translate([0,0,-3]) color("red") cylinder(r=(diameter - 0)/2 + larger, h=h + larger);
+    // Fudge factor - for some reason, the dxf is completely non-scaled.
+    minkowski() {
+	rotate([0,0,90]) linear_extrude(height=h) scale(diameter/(2*fudge)) translate([-fudge,-fudge]) import(file = "bottom.dxf");
+	cylinder(r=larger, h=epsilon);
+    }
 }
 
 module case(base_high=vertical_divide, bottom_thick=bottom_thick) {
@@ -98,7 +115,7 @@ module case(base_high=vertical_divide, bottom_thick=bottom_thick) {
 		two_batt_module(negatives=true);
 		remote_control(negatives=true);
 	    }
-	    bottom(h=bottom_thick);
+	    bottom(h=bottom_thick, larger=clearance);
 	}
     }
 }
@@ -119,12 +136,13 @@ module xray() {
 	union() {
 	    case(base_high=vertical_divide);
 	    color("red") knob(hovering=vertical_divide+clearance);
-	    %bottom(smaller=clearance);
+	    %bottom();
 	}
 	translate([0,0,-epsilon]) cube([100,100,100]);
     }
 }
 
+//bottom();
 //battery();
 //case();
 xray();

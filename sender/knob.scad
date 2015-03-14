@@ -21,21 +21,26 @@ function polar_y(r, angle) = r * sin(angle);
 function knurl(fraction, knurl_dia=knob_knurl_depth/2) = sin(fraction * 360) * knurl_dia - knurl_dia;
 
 module knob_slice(r=knob_dia/2,segments=knob_dividers) {
-    a = 360 / knob_dividers / 10;
+    a = 360 / knob_dividers / 15;
     poly = [[0,0],
 	[polar_x(r + knurl(0),   0*0), polar_y(r + knurl(0),0*a)],
-	[polar_x(r + knurl(1/10),1*a), polar_y(r + knurl(1/10),1*a)],
-	[polar_x(r + knurl(2/10),2*a), polar_y(r + knurl(2/10),2*a)],
-	[polar_x(r + knurl(3/10),3*a), polar_y(r + knurl(3/10),3*a)],
-	[polar_x(r + knurl(4/10),4*a), polar_y(r + knurl(4/10),4*a)],
-	[polar_x(r + knurl(5/10),5*a), polar_y(r + knurl(5/10),5*a)],
-	[polar_x(r + knurl(6/10),6*a), polar_y(r + knurl(6/10),6*a)],
-	[polar_x(r + knurl(7/10),7*a), polar_y(r + knurl(7/10),7*a)],
-	[polar_x(r + knurl(8/10),8*a), polar_y(r + knurl(8/10),8*a)],
-	[polar_x(r + knurl(9/10),9*a), polar_y(r + knurl(9/10),9*a)],
-	[polar_x(r + knurl(10/10),10*a), polar_y(r + knurl(10/10),10*a)],
+	[polar_x(r + knurl(1/15),1*a), polar_y(r + knurl(1/15),1*a)],
+	[polar_x(r + knurl(2/15),2*a), polar_y(r + knurl(2/15),2*a)],
+	[polar_x(r + knurl(3/15),3*a), polar_y(r + knurl(3/15),3*a)],
+	[polar_x(r + knurl(4/15),4*a), polar_y(r + knurl(4/15),4*a)],
+	[polar_x(r + knurl(5/15),5*a), polar_y(r + knurl(5/15),5*a)],
+	[polar_x(r + knurl(6/15),6*a), polar_y(r + knurl(6/15),6*a)],
+	[polar_x(r + knurl(7/15),7*a), polar_y(r + knurl(7/15),7*a)],
+	[polar_x(r + knurl(8/15),8*a), polar_y(r + knurl(8/15),8*a)],
+	[polar_x(r + knurl(9/15),9*a), polar_y(r + knurl(9/15),9*a)],
+	[polar_x(r + knurl(10/15),10*a), polar_y(r + knurl(10/15),10*a)],
+	[polar_x(r + knurl(11/15),11*a), polar_y(r + knurl(11/15),11*a)],
+	[polar_x(r + knurl(12/15),12*a), polar_y(r + knurl(12/15),12*a)],
+	[polar_x(r + knurl(13/15),13*a), polar_y(r + knurl(13/15),13*a)],
+	[polar_x(r + knurl(14/15),14*a), polar_y(r + knurl(14/15),14*a)],
+	[polar_x(r + knurl(15/15),15*a), polar_y(r + knurl(15/15),15*a)],
 	// Add a little bit of overlap to the next slice:
-	[polar_x(r + knurl(11/10),11*a), polar_y(r + knurl(11/10),11*a)],
+	[polar_x(r + knurl(16/15),16*a), polar_y(r + knurl(16/15),16*a)],
         [0,0]];
     polygon(points=poly, convexity=2);
 }
