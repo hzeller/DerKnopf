@@ -4,7 +4,7 @@ $fa=1;
 knob_dia=71;
 knob_height=19;
 knob_cut_angle=46.5;
-knob_knurl_depth=1;
+knob_knurl_depth=2;
 knob_dividers=12;  // Should be the number of detents in rotatry encoder
 knob_top_roundness=5;
 
