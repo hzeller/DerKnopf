@@ -38,8 +38,8 @@ module battery(length=batt_len, dia=batt_dia,negatives=true) {
 
 	    // +/- text
 	    translate([0,0,dia/2]) rotate([0,0,0]) union(){
-		translate([10,-6/2,0]) color("black") linear_extrude(height=dia/2 + 0.6) text("–", size=8, font=font);
-		translate([length-15,-6/2,0]) color("red") linear_extrude(height=dia/2 + 0.6) text("+", size=8, font=font);
+		translate([10,-6/2,0]) color("black") linear_extrude(height=dia/2 + 0.5) text("–", size=8, font=font);
+		translate([length-15,-6/2,0]) color("red") linear_extrude(height=dia/2 + 0.5) text("+", size=8, font=font);
 	    }
 	}
     }
