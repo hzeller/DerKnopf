@@ -8,5 +8,5 @@ bottom.svg: bottom.fig
 	fig2dev -L svg $< $@
 
 %.dxf: %.eps
-	pstoedit -psarg "-r300x300" -dt -f dxf:-polyaslines $< $@
+	pstoedit -psarg "-r600x600" -dt -f dxf:-polyaslines $< $@
 

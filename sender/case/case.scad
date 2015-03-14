@@ -13,8 +13,18 @@ total_height=28;
 vertical_divide=15;
 knob_overlap=6;
 bottom_thick=3.2;  // acrylic
-led_dia=5.6;
+led_mount_dia=5.7;
 led_front=4.5;
+case_knob_clearance=1;
+
+module led(dia=5) {
+    // Nice infrared purple :)
+    color("purple") {
+	sphere(r=dia/2);
+	cylinder(r=dia/2,h=8.5 - dia/2);
+	translate([0,0,8.5-dia/2-2]) cylinder(r=dia/2 + 0.5, h=2);
+    }
+}
 
 module battery(length=batt_len, dia=batt_dia,negatives=true) {
     translate([-batt_len/2,0,0]) {
@@ -33,12 +43,17 @@ module battery(length=batt_len, dia=batt_dia,negatives=true) {
     }
 }
 
+module m3_bolt(h=2.6) {
+    cylinder(r=5.7/2, h=h, $fn=6);
+}
+
 module remote_control(l=37, w=pcb_width, h=9,negatives=true) {
     translate([-l/2,-w/2,0]) cube([l,w,h]);
     if (negatives) color("lightblue") {
 	difference() {    // turn shaft
-	    cylinder(r=6.1/2, h=h + 14.55);
-	    translate([-4, 1.5, -epsilon]) cube([8, 8, 25+2*epsilon]);
+	    cylinder(r=6.4/2, h=h + 14.55 + 0.5/*fudge*/);
+	    // ... with flattened side.
+	    translate([-4, 1.6, -epsilon]) cube([8, 8, 25+2*epsilon]);
 	}
 	cylinder(r=9/2 + clearance, h=h + 6.8);  // mount shaft
 
@@ -47,7 +62,7 @@ module remote_control(l=37, w=pcb_width, h=9,negatives=true) {
 	    cylinder(r=3.2/2, h=50);
 	    translate([0,0,3]) {
 		// Space for bolt
-		rotate([0,0,30]) cylinder(r=5.7/2, h=2.6, $fn=6);
+		rotate([0,0,30]) m3_bolt();
 		translate([-5.5/2,0,0]) cube([5.5, 6, 2.6]);
 	    }
 	    translate([0,0,9.5]) {
@@ -59,15 +74,20 @@ module remote_control(l=37, w=pcb_width, h=9,negatives=true) {
 	}
 
 	// Mounting gear on encoder
-	translate([0,0,h + 1.2]) cylinder(r=15/2 + clearance, h=3);
+	translate([0,0,h + 2.9]) cylinder(r=16/2 + clearance, h=3.5);
 	// Retainer clip for encoder
 	translate([6, -3/2, 0]) cube([2, 3, h+3]);
+    }
 
+    if (negatives) {
 	// Infrared diodes
 	// Mounting holes
-	translate([0,0,led_dia/2-2]) rotate([0,90,0]) translate([0,0,-33]) cylinder(r=led_dia/2, h=66);
-	// Front - a bit tighter.
-	translate([0,0,led_dia/2-2]) rotate([0,90,0]) translate([0,0,-35]) cylinder(r=led_front/2, h=70);
+	translate([0,0,led_mount_dia/2-2]) {
+	    rotate([0,90,0]) translate([0,0,-33]) cylinder(r=led_mount_dia/2, h=66);
+	    // LEDs
+	    translate([-knob_dia/2+2,0,0]) rotate([0,90,0]) led();
+	    translate([knob_dia/2-2,0,0]) rotate([0,-90,0]) led();
+	}
     }
 }
 
@@ -94,13 +114,24 @@ module item_blocks(negatives=true, offset=0) {
     remote_control(negatives=negatives);
 }
 
-module bottom(h=bottom_thick, larger=0, fudge=1.246) {
+module bottom(h=bottom_thick, larger=0, fudge=1.246, negatives=false) {
     echo("Bottom diameter", (diameter - 0)/2 - larger);
-    //translate([0,0,-3]) color("red") cylinder(r=(diameter - 0)/2 + larger, h=h + larger);
+    //translate([0,0,-3]) color("red") cylinder(r=31.511, h=h);
     // Fudge factor - for some reason, the dxf is completely non-scaled.
     minkowski() {
-	rotate([0,0,90]) linear_extrude(height=h) scale(diameter/(2*fudge)) translate([-fudge,-fudge]) import(file = "bottom.dxf");
+	rotate([0,0,90]) linear_extrude(height=h) scale(31.511/fudge) translate([-fudge,-fudge]) import(file = "bottom.dxf");
 	cylinder(r=larger, h=epsilon);
+    }
+    if (negatives) {
+	// Drill holes through the case
+	translate([0, 25, 0]) {
+	    cylinder(r=3.4/2, h=20);
+	    translate([0,0,11]) m3_bolt(h=12);
+	}
+	translate([0, -25, 0]) {
+	    cylinder(r=3.4/2, h=20);
+	    translate([0,0,11]) m3_bolt(h=12);
+	}
     }
 }
 
@@ -108,14 +139,14 @@ module case(base_high=vertical_divide, bottom_thick=bottom_thick) {
     difference() {
 	union() {
 	    cylinder(r=diameter/2 - clearance, h=base_high);
-	    knurls(h=base_high-knob_overlap);
+	    knurls(h=base_high-knob_overlap-case_knob_clearance);
 	}
 	translate([0,0,-epsilon]) {
 	    translate([0,0,bottom_thick - epsilon]) {
 		two_batt_module(negatives=true);
 		remote_control(negatives=true);
 	    }
-	    bottom(h=bottom_thick, larger=clearance);
+ 	    bottom(h=bottom_thick, larger=clearance, negatives=true);
 	}
     }
 }
@@ -135,20 +166,22 @@ module xray() {
     difference() {
 	union() {
 	    case(base_high=vertical_divide);
-	    color("red") knob(hovering=vertical_divide+clearance);
+	    color("red") knob(hovering=vertical_divide);
 	    %bottom();
 	}
 	translate([0,0,-epsilon]) cube([100,100,100]);
     }
 }
 
-//bottom();
+//bottom(negatives=true);
 //battery();
-//case();
-xray();
+//xray();
+//led();
 //knob();
 //rotate([180, 0, 0]) knob();
+//rotate([180,0,0]) case();
 //sphere(r=10, $fn=8);
-//remote_control();
+case();
+//translate([0,0,bottom_thick]) remote_control();
 //translate([-40,0,0]) two_batt_module();
 //translate([+40,0,0]) three_batt_module();
