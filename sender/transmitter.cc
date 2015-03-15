@@ -17,7 +17,7 @@
 
 #include "quad.h"
 
-#define DO_TIMER_COMPARE 1
+#define DO_TIMER_COMPARE 0
 #define ALLOW_BUTTON 0
 
 #define IR_FREQ        38000  // Frequency of IR carrier
@@ -140,14 +140,12 @@ ISR(TIM0_COMPA_vect) {
     --countdown;
 }
 
-ISR(PCINT0_vect) {
-    // Waking up
-}
+EMPTY_INTERRUPT(PCINT0_vect);   // Wake up.
 
 #if ALLOW_BUTTON
 static bool is_button_pressed() { return (ROT_PORT_IN & ROT_BUTTON) == 0; }
 #endif
-static uint8_t rot_status() {
+static inline uint8_t rot_status() {
     return ((ROT_PORT_IN & ROT_B) ? 10 : 00) | ((ROT_PORT_IN & ROT_A) ? 1 : 0);
 }
 
@@ -156,8 +154,7 @@ int main() {
     send_state = SENDER_IDLE;
     
     IR_OUT_DATADIR |= (IR_OUT_BIT | IR_DEBUG_BIT);
-    GIMSK |= (1<<PCIE0);              // Interrupt on change anywhere 0:7
-    PCMSK0 =(1<<PCINT1)|(1<<PCINT0);  // The pins we are interested in.
+    PCMSK0 =(1<<PCINT1)|(1<<PCINT0);  // The pins we are interested in when PCIE0 is on.
     
     TCCR0B = (1<<CS00);     // timer 0: no prescaling p.84
     
@@ -199,16 +196,16 @@ int main() {
 #endif
         }
 
-#if 1
         if (PollIsSendingDone()) {
             cli();
+            GIMSK |= (1<<PCIE0);              // Interrupt on change anywhere 0:7
             set_sleep_mode(SLEEP_MODE_PWR_DOWN);
             sleep_enable();
                 
             sei();
             sleep_cpu();
             sleep_disable();
+            GIMSK = 0;
         }
-#endif
     }
 }
