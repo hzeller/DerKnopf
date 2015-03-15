@@ -8,12 +8,13 @@ pcb_distance=1;
 diameter=65;   // TODO: calculate.
 batt_len=44.5 + 6 + 2*clearance;  // Additional space for contacts
 batt_dia=10.5 + 2*clearance;
+batt_blade_thick=1.5;
 font="Helvetica:style=Bold";
 total_height=28;
 vertical_divide=15;
 knob_overlap=6;
 bottom_thick=3.2;  // acrylic
-led_mount_dia=5.7;
+led_mount_dia=6;
 led_front=4.5;
 case_knob_clearance=1;
 
@@ -32,12 +33,13 @@ module battery(length=batt_len, dia=batt_dia,negatives=true) {
 	translate([0,-dia/2,0]) cube([length, dia, dia/2]);
 	if (negatives) {
 	    // Contact blades
-	    translate([0,-0.6*dia,1/8*dia]) cube([1, 30, 3/4 * dia]);
-	    translate([batt_len-1,-0.6*dia,1/8*dia]) cube([1, 1.4*dia, 3/4 * dia]);
-	    
-	    translate([0,-0.5,dia/4]) rotate([90,0,0]) translate([0,0,-dia/2]) {
-		translate([5,-6/2+1,0]) color("black") linear_extrude(height=dia + 0.4) text("–", size=8, font=font);
-		translate([length-10,-6/2+1,0]) color("red") linear_extrude(height=dia + 0.4) text("+", size=8, font=font);
+	    translate([0,-0.6*dia,-1]) cube([batt_blade_thick, 30, dia+1]);
+	    translate([batt_len-1,-0.6*dia,-1]) cube([batt_blade_thick, 1.4*dia,dia+1]);
+
+	    // +/- text
+	    translate([0,0,dia/2]) rotate([0,0,0]) union(){
+		translate([10,-6/2,0]) color("black") linear_extrude(height=dia/2 + 0.6) text("–", size=8, font=font);
+		translate([length-15,-6/2,0]) color("red") linear_extrude(height=dia/2 + 0.6) text("+", size=8, font=font);
 	    }
 	}
     }
@@ -178,10 +180,10 @@ module xray() {
 //xray();
 //led();
 //knob();
+//case();
 //rotate([180, 0, 0]) knob();
-//rotate([180,0,0]) case();
+rotate([180,0,0]) case();
 //sphere(r=10, $fn=8);
-case();
 //translate([0,0,bottom_thick]) remote_control();
 //translate([-40,0,0]) two_batt_module();
 //translate([+40,0,0]) three_batt_module();
