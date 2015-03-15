@@ -12,24 +12,29 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <avr/power.h>
+#include <util/delay.h>
 
 #include "quad.h"
+
+#define DO_TIMER_COMPARE 1
+#define ALLOW_BUTTON 0
 
 #define IR_FREQ        38000  // Frequency of IR carrier
 #define IR_OUT_PORT    PORTB
 #define IR_OUT_DATADIR DDRB
-#define IR_OUT_BIT     (1<<0)
+#define IR_OUT_BIT     (1<<2)
+#define IR_DEBUG_BIT   (1<<1)  // Nice to trigger the scope on.
 #define IR_BURST_LEN   32
 #define IR_BIT_0       32
 #define IR_BIT_1       64
 #define IR_FINAL_PAUSE 255
-#define IR_DEBUG_BIT   (1<<1)  // Nice to trigger the scope on.
 
-#define ROT_PORT_OUT PORTD
-#define ROT_PORT_IN  PIND
+#define ROT_PORT_OUT PORTA
+#define ROT_PORT_IN  PINA
 #define ROT_BUTTON   (1<<2)   // Also INT0 to wakeup
-#define ROT_A        (1<<3)   // Also INT1 to wakeup
-#define ROT_B        (1<<4)
+#define ROT_A        (1<<0)   // Also INT1 to wakeup
+#define ROT_B        (1<<1)
 
 // The commands we send are just a 32 bit values. Make that some text :)
 #define MK_COMMAND(a, b, c, d) \
@@ -63,10 +68,16 @@ void Send(uint32_t value) {
     current_bit = 0x80000000;
     send_state = BIT_BURST;
     countdown = 2 * IR_BURST_LEN;  // We make the first burst double the length.
-    OCR2 = F_CPU / (2*IR_FREQ);  // Need double transmit frequency for one cycle
+    OCR0A = F_CPU / (2*IR_FREQ);  // Need double transmit frequency for one cycle
     IR_OUT_PORT |= IR_DEBUG_BIT;
-    TCNT2 = 0;
-    TIMSK |= (1<<OCIE2);  // Go
+    TCNT0 = 0;
+#if DO_TIMER_COMPARE
+    TCCR0A = ((1<<WGM01)   // OCRA compare. p.83
+              | (1<<COM0A0)); // Toggle OC0A on compare match
+#else
+    TCCR0A = (1<<WGM01);   // OCRA compare. p.83
+#endif
+    TIMSK0 |= (1<<OCIE0A);  // Go
 }
 
 void advanceStateBottomHalf();
@@ -86,7 +97,7 @@ void advanceStateBottomHalf() {
     // The interrupt is still running and polling send_state - so this results
     // in race-conditions.
     if (send_state == FINAL_PAUSE) {
-        TIMSK &= ~(1<<OCIE2);       // Disable interrupt. We are done.
+        TIMSK0 &= ~(1<<OCIE0A);       // Disable interrupt. We are done.
         IR_OUT_PORT &= ~(IR_DEBUG_BIT|IR_OUT_BIT);
         send_state = SENDER_IDLE;  // External observers might be interested.
     }
@@ -105,40 +116,69 @@ void advanceStateBottomHalf() {
         send_state = BIT_BURST;
         countdown = IR_BURST_LEN;
         current_bit >>= 1;
+#if DO_TIMER_COMPARE        
+        TCCR0A = ((1<<WGM01)   // OCRA compare. p.83
+                  | (1<<COM0A0)); // Toggle OC0A on compare match
+#endif
+
     }
 }
 
-ISR(TIMER2_COMP_vect) {
+ISR(TIM0_COMPA_vect) {
+#if DO_TIMER_COMPARE
+    if (!countdown) {
+        TCCR0A = (1<<WGM01);   // OCRA compare. p.83
+        IR_OUT_PORT &= ~(IR_OUT_BIT);
+        return;
+    }
+#else
     if (!countdown) return;
     if (send_state == BIT_BURST) {
         IR_OUT_PORT ^= IR_OUT_BIT;
     }
+#endif
     --countdown;
 }
 
+ISR(PCINT0_vect) {
+    // Waking up
+}
+
+#if ALLOW_BUTTON
 static bool is_button_pressed() { return (ROT_PORT_IN & ROT_BUTTON) == 0; }
+#endif
 static uint8_t rot_status() {
     return ((ROT_PORT_IN & ROT_B) ? 10 : 00) | ((ROT_PORT_IN & ROT_A) ? 1 : 0);
 }
 
 int main() {
+    clock_prescale_set(clock_div_2);   // Default speed: 4Mhz
     send_state = SENDER_IDLE;
-    IR_OUT_DATADIR |= IR_OUT_BIT|IR_DEBUG_BIT;
-    TCCR2= ((1<<CS20)      // no prescaling p.116
-            | (1<<WGM21)   // OCR2 compare. p.115
-            );
+    
+    IR_OUT_DATADIR |= (IR_OUT_BIT | IR_DEBUG_BIT);
+    GIMSK |= (1<<PCIE0);              // Interrupt on change anywhere 0:7
+    PCMSK0 =(1<<PCINT1)|(1<<PCINT0);  // The pins we are interested in.
+    
+    TCCR0B = (1<<CS00);     // timer 0: no prescaling p.84
+    
     ROT_PORT_OUT |= (ROT_BUTTON|ROT_B|ROT_A);  // Switch on pullups.
+    
+    PRR = (1<<PRADC);  // Don't need ADC. Power down.
+    
     sei();
-
+    
     QuadDecoder rotary;
     int rot_pos = 0;
+#if ALLOW_BUTTON
     bool last_button_status = false;
+#endif
     for (;;) {
         // We accumulate the state here, so that we can send it possibly slower
         // than they are generated.
         rot_pos += rotary.UpdateEnoderState(rot_status());
+#if ALLOW_BUTTON
         const bool new_button_status = is_button_pressed();
-    
+#endif
         // If sender status is free, send our status.
         if (PollIsSendingDone()) {
             if (rot_pos > 0) {
@@ -149,24 +189,25 @@ int main() {
                 Send(COMMAND_LESS);
                 ++rot_pos;
             }
+#if ALLOW_BUTTON
             else {
                 if (!last_button_status && new_button_status) Send(COMMAND_B_ON);
                 if (last_button_status && !new_button_status) Send(COMMAND_BOFF);
                 if (last_button_status && new_button_status)  Send(COMMAND_BHLD);
                 last_button_status = new_button_status;
             }
+#endif
         }
-#if 0
-        // Nothing to send ? Go back to sleep. Does not work yet properly.
+
+#if 1
         if (PollIsSendingDone()) {
-            GICR |= (1<<INT1)|(1<<INT0);
-            MCUCR = ((1<<SE)|    // Sleep enable
-                     (1<<SM1)    // Power down
-                     // 0 on ISCxx -> low level interrupt request.
-                     );
-            sleep_mode();
+            cli();
+            set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+            sleep_enable();
+                
+            sei();
+            sleep_cpu();
             sleep_disable();
-            GICR &= ~(1<<INT1)|(1<<INT0);
         }
 #endif
     }
