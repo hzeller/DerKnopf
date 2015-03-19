@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
  * Copyright (c) h.zeller@acm.org. GNU public License.
  *
- * Receiver for 'DerKnopf'
+ * Receiver for 'DerKnopf'. Input something like TSOP38238.
  *
  * TODO: switch ISR use from output to input. Instead of using the ISR for motor pulses, we
  * should use it to receive and precisely measure infrared input.
@@ -12,7 +12,8 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define IN_IR (1<<5)
+#define IR_PORT PINC
+#define IR_IN (1<<5)
 
 #define MOT_PORT PORTD
 #define MOT_DIRECTION DDRD
@@ -28,7 +29,7 @@ uint8_t motor_cycle[] = {
     (MOT_A1 | MOT_B0),
 };
 
-static inline bool infrared_in() { return (PINC & IN_IR) != 0; }
+static inline bool infrared_in() { return (IR_PORT & IR_IN) != 0; }
 
 // (lifted from my other project, rc-screen)
 static uint8_t read_infrared(uint8_t *buffer) {
