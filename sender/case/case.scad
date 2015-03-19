@@ -13,12 +13,11 @@ font="Helvetica:style=Bold";
 total_height=28;
 vertical_divide=15;
 knob_overlap=6;
-bottom_thick=3.2;  // acrylic
-led_mount_dia=6;
-led_front=4.5;
-case_knob_clearance=1;
+bottom_thick=3.2;  // acrylic is about 3.4mm thick
+led_mount_dia=6.4;
+case_knob_clearance=0.5;
 
-module led(dia=5) {
+module led(dia=5.3) {
     // Nice infrared purple :)
     color("purple") {
 	sphere(r=dia/2);
@@ -38,15 +37,15 @@ module battery(length=batt_len, dia=batt_dia,negatives=true) {
 
 	    // +/- text
 	    translate([0,0,dia/2]) rotate([0,0,0]) union(){
-		translate([10,-6/2,0]) color("black") linear_extrude(height=dia/2 + 0.5) text("–", size=8, font=font);
-		translate([length-15,-6/2,0]) color("red") linear_extrude(height=dia/2 + 0.5) text("+", size=8, font=font);
+		translate([10,-6/2,0]) color("black") linear_extrude(height=dia/2 + 0.6) text("–", size=8, font=font);
+		translate([length-15,-6/2,0]) color("red") linear_extrude(height=dia/2 + 0.6) text("+", size=8, font=font);
 	    }
 	}
     }
 }
 
 module m3_bolt(h=2.6) {
-    cylinder(r=5.7/2, h=h, $fn=6);
+    cylinder(r=6.4/2, h=h, $fn=6);
 }
 
 module remote_control(l=37, w=pcb_width, h=9,negatives=true) {
@@ -85,7 +84,7 @@ module remote_control(l=37, w=pcb_width, h=9,negatives=true) {
 	// Infrared diodes
 	// Mounting holes
 	translate([0,0,led_mount_dia/2-2]) {
-	    rotate([0,90,0]) translate([0,0,-33]) cylinder(r=led_mount_dia/2, h=66);
+	    rotate([0,90,0]) translate([0,0,-30]) cylinder(r=led_mount_dia/2, h=60);
 	    // LEDs
 	    translate([-knob_dia/2+2,0,0]) rotate([0,90,0]) led();
 	    translate([knob_dia/2-2,0,0]) rotate([0,-90,0]) led();
@@ -128,11 +127,11 @@ module bottom(h=bottom_thick, larger=0, fudge=1.246, negatives=false) {
 	// Drill holes through the case
 	translate([0, 25, 0]) {
 	    cylinder(r=3.4/2, h=20);
-	    translate([0,0,11]) m3_bolt(h=12);
+	    translate([0,0,10]) m3_bolt(h=12);
 	}
 	translate([0, -25, 0]) {
 	    cylinder(r=3.4/2, h=20);
-	    translate([0,0,11]) m3_bolt(h=12);
+	    translate([0,0,10]) m3_bolt(h=12);
 	}
     }
 }
@@ -187,3 +186,5 @@ rotate([180,0,0]) case();
 //translate([0,0,bottom_thick]) remote_control();
 //translate([-40,0,0]) two_batt_module();
 //translate([+40,0,0]) three_batt_module();
+//rotate([0,0,90]) m3_bolt();
+//translate([0,7,0]) cube([5.4, 10, 1], center=true);
