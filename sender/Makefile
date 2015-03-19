@@ -2,11 +2,11 @@
 ##
 
 DEFINES=-DF_CPU=4000000UL
-TARGET_ARCH=-mmcu=atmega8
+TARGET_ARCH=-mmcu=attiny24
 CXX=avr-g++
 CXXFLAGS=-Os -g -Wall -ffunction-sections -fdata-sections -fshort-enums $(DEFINES)
 AVRDUDE_DEVICE ?= /dev/ttyUSB0
-AVRDUDE     = avrdude -p m8 -c stk500v2 -P $(AVRDUDE_DEVICE)
+AVRDUDE     = avrdude -p attiny24 -c stk500v2 -P $(AVRDUDE_DEVICE)
 FLASH_CMD   = $(AVRDUDE) -e -U flash:w:main.hex
 LINK=avr-g++ -g $(TARGET_ARCH) -Wl,-gc-sections
 OBJECTS=transmitter.o quad.o
@@ -43,24 +43,24 @@ clean:
 # internal oscillator.
 ### Fuse high byte:
 # 7 rstdisbl	1   disable external reset: disabled (i.e.: reset enabled).
-# 6 wdton	1   watchdog.
-# - spien	0   serial programming: enabled.
-# 4 chkopt	1   clock options (doesn't matter, we do internal RC)
+# 6 dwen        1   debug wire enable
+# 5 spien	0   serial programming: enabled.
+# 4 wdton	1   don't need watchdog. Save power.
 #
-# 3 eesave      0   save eeprom on chip erase: enabled
-# 2 bootsz1	1
-# 1 bootsz0	1
-# 0 bootrst     1   starting at 0x0000
+# 3 eesave      0   save eeprom on chip erase: disabled (we don't use eeprom)
+# 2 bodlevel2	1   No brown-out
+# 1 bodlevel1	1
+# 0 bodlevel0   1 
 
 ### low byte:
-# 7 bodlevel	1   brown out detect at 2.7v
-# 6 boden	0   brown out enable.
+# 7 chkdiv8	0   Default division by 8 (needed as we op with 3V)
+# 6 ckout       1   clock out (no)
 # 5 sut1	1-+ slow rising power (page 30)
 # 4 sut0	0/
 #
 # 3 cksel3	0\
-# 2 cksel2	0 + internal RC oscillator  (page 30)  (4Mhz)
-# 1 cksel1	1/
-# 0 cksel0	1
+# 2 cksel2	0 + internal RC oscillator (8Mhz)
+# 1 cksel1	1 |
+# 0 cksel0	0/
 fuse:
-	$(AVRDUDE) -U hfuse:w:0xd7:m -U lfuse:w:0xe3:m
+	$(AVRDUDE) -U hfuse:w:0xd7:m -U lfuse:w:0x62:m
