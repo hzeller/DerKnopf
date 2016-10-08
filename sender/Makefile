@@ -4,7 +4,7 @@
 DEFINES=-DF_CPU=4000000UL
 TARGET_ARCH=-mmcu=attiny24
 CXX=avr-g++
-CXXFLAGS=-Os -g -Wall -ffunction-sections -fdata-sections -fshort-enums $(DEFINES)
+CXXFLAGS=-Os -g -W -Wall -ffunction-sections -fdata-sections -fshort-enums $(DEFINES)
 AVRDUDE_DEVICE ?= /dev/ttyUSB0
 AVRDUDE     = avrdude -p attiny24 -c stk500v2 -P $(AVRDUDE_DEVICE)
 FLASH_CMD   = $(AVRDUDE) -e -U flash:w:main.hex
@@ -50,7 +50,7 @@ clean:
 # 3 eesave      0   save eeprom on chip erase: disabled (we don't use eeprom)
 # 2 bodlevel2	1   No brown-out
 # 1 bodlevel1	1
-# 0 bodlevel0   1 
+# 0 bodlevel0   1
 
 ### low byte:
 # 7 chkdiv8	0   Default division by 8 (needed as we op with 3V)
