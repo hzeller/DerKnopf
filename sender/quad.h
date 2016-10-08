@@ -8,7 +8,7 @@
 class QuadDecoder {
 public:
   QuadDecoder();
-  
+
   // Given the current external state of the quadratur encoder (two bits),
   // returns if it increased or decreased (+1, -1 or 0).
   //
@@ -17,10 +17,10 @@ public:
   //
   // Note, that switch bouncing will not result in runnaway increase or decrease
   // sequence but emits self-zeoring +1/-1.
-  int UpdateEnoderState(int value);
+  int8_t UpdateEnoderState(uint8_t encoder_bits);
 
 private:
-  int current_state_;
+  int8_t current_state_;
 };
 
 #endif  // QUAD_DECOER_H_
