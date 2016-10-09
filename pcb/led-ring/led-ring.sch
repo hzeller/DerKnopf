@@ -28,6 +28,7 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
+LIBS:led-ring-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -539,5 +540,28 @@ D
 Text GLabel 4300 2450 1    60   Input ~ 0
 E
 Text GLabel 4700 2450 1    60   Input ~ 0
+F
+$Comp
+L CONN_01X12 P1
+U 1 1 57F9B599
+P 5800 2800
+F 0 "P1" H 5878 2841 50  0000 L CNN
+F 1 "CONN_01X12" H 5878 2750 50  0000 L CNN
+F 2 "knopf:FlatFlex" H 5800 2800 50  0001 C CNN
+F 3 "" H 5800 2800 50  0000 C CNN
+	1    5800 2800
+	1    0    0    -1  
+$EndComp
+Text GLabel 5600 2250 0    50   Input ~ 0
+A
+Text GLabel 5600 2350 0    50   Input ~ 0
+B
+Text GLabel 5600 2450 0    50   Input ~ 0
+C
+Text GLabel 5600 3150 0    50   Input ~ 0
+D
+Text GLabel 5600 3250 0    50   Input ~ 0
+E
+Text GLabel 5600 3350 0    50   Input ~ 0
 F
 $EndSCHEMATC
