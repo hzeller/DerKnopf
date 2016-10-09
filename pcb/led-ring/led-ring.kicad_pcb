@@ -3,10 +3,10 @@
   (general
     (links 60)
     (no_connects 60)
-    (area 84.899999 84.899999 115.100001 115.100001)
+    (area 82.586734 81.61799 118.293184 117.9685)
     (thickness 1.6)
     (drawings 2)
-    (tracks 4)
+    (tracks 25)
     (zones 0)
     (modules 31)
     (nets 7)
@@ -114,7 +114,7 @@
     (add_net F)
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F973F8)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F973F8)
     (at 96.4 112 253.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -156,7 +156,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97411)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97411)
     (at 94.1 111 241.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -198,7 +198,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9742A)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9742A)
     (at 92.1 109.7 230.6)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -240,7 +240,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97443)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97443)
     (at 90.3 107.9 219.4)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -282,7 +282,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9745C)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9745C)
     (at 89 105.9 208.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -324,7 +324,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97475)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97475)
     (at 88 103.6 196.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -366,7 +366,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9748E)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9748E)
     (at 87.6 101.2 185.6)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -408,7 +408,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F974A7)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F974A7)
     (at 87.6 98.8 174.4)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -450,7 +450,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F974C0)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F974C0)
     (at 88 96.4 163.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -492,7 +492,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F974D9)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F974D9)
     (at 89 94.1 151.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -534,7 +534,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F974F2)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F974F2)
     (at 90.3 92.1 140.6)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -576,7 +576,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9750B)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9750B)
     (at 92.1 90.3 129.4)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -618,7 +618,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97524)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97524)
     (at 94.1 89 118.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -660,7 +660,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9753D)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9753D)
     (at 96.4 88 106.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -702,7 +702,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97556)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97556)
     (at 98.8 87.6 95.6)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -744,7 +744,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9756F)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9756F)
     (at 101.2 87.6 84.4)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -786,7 +786,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97588)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97588)
     (at 103.6 88 73.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -828,7 +828,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F975A1)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F975A1)
     (at 105.9 89 61.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -870,7 +870,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F975BA)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F975BA)
     (at 107.9 90.3 50.6)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -912,7 +912,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F975D3)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F975D3)
     (at 109.7 92.1 39.4)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -954,7 +954,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F975EC)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F975EC)
     (at 111 94.1 28.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -996,7 +996,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97605)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97605)
     (at 112 96.4 16.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1038,7 +1038,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9761E)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9761E)
     (at 112.4 98.8 5.6)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1080,7 +1080,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97637)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97637)
     (at 112.4 101.2 354.4)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1122,7 +1122,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97650)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97650)
     (at 112 103.6 343.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1164,7 +1164,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97669)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97669)
     (at 111 105.9 331.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1206,7 +1206,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F97682)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F97682)
     (at 109.7 107.9 320.6)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1248,7 +1248,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F9769B)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F9769B)
     (at 107.9 109.7 309.4)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1290,7 +1290,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F976B4)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F976B4)
     (at 105.9 111 298.1)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1332,7 +1332,7 @@
     )
   )
 
-  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9CB05) (tstamp 57F976CD)
+  (module LEDs:LED_0603 locked (layer F.Cu) (tedit 57F9E429) (tstamp 57F976CD)
     (at 103.6 112 286.9)
     (descr "LED 0603 smd package")
     (tags "LED led 0603 SMD smd SMT smt smdled SMDLED smtled SMTLED")
@@ -1374,7 +1374,7 @@
     )
   )
 
-  (module knopf:FlatFlex (layer B.Cu) (tedit 57F9CC85) (tstamp 57F9CD23)
+  (module knopf:FlatFlex (layer B.Cu) (tedit 57F9E429) (tstamp 57F9CD23)
     (at 100 113.03)
     (path /57F9B599)
     (fp_text reference P1 (at 0.254 3.556) (layer B.SilkS)
@@ -1406,9 +1406,30 @@
   (gr_circle (center 100 100) (end 115 100) (layer Edge.Cuts) (width 0.2))
   (gr_circle (center 100 100) (end 110 100) (layer Edge.Cuts) (width 0.2))
 
-  (segment (start 94.234 113.792) (end 91.44 110.998) (width 0.25) (layer B.Cu) (net 1))
-  (segment (start 96.113 113.792) (end 94.234 113.792) (width 0.25) (layer B.Cu) (net 1))
+  (segment (start 96.113 113.792) (end 95.504 113.792) (width 0.25) (layer B.Cu) (net 1))
   (segment (start 97.25 113.03) (end 96.875 113.03) (width 0.25) (layer B.Cu) (net 1))
   (segment (start 96.875 113.03) (end 96.113 113.792) (width 0.25) (layer B.Cu) (net 1))
+  (segment (start 95.854011 111.895987) (end 95.854011 112.933989) (width 0.25) (layer B.Cu) (net 2))
+  (segment (start 95.854011 112.933989) (end 95.758 113.03) (width 0.25) (layer B.Cu) (net 2))
+  (segment (start 97.163987 110.586011) (end 95.854011 111.895987) (width 0.25) (layer B.Cu) (net 2))
+  (segment (start 97.556011 110.586011) (end 97.163987 110.586011) (width 0.25) (layer B.Cu) (net 2))
+  (segment (start 97.75 113.03) (end 97.75 110.78) (width 0.25) (layer B.Cu) (net 2))
+  (segment (start 97.75 110.78) (end 97.556011 110.586011) (width 0.25) (layer B.Cu) (net 2))
+  (segment (start 95.504 111.506) (end 95.504 112.268) (width 0.25) (layer B.Cu) (net 3))
+  (segment (start 96.774 110.236) (end 95.504 111.506) (width 0.25) (layer B.Cu) (net 3))
+  (segment (start 97.706 110.236) (end 96.774 110.236) (width 0.25) (layer B.Cu) (net 3))
+  (segment (start 98.25 113.03) (end 98.25 110.78) (width 0.25) (layer B.Cu) (net 3))
+  (segment (start 98.25 110.78) (end 97.706 110.236) (width 0.25) (layer B.Cu) (net 3))
+  (segment (start 102.294 110.236) (end 103.378 110.236) (width 0.25) (layer B.Cu) (net 4))
+  (segment (start 101.75 113.03) (end 101.75 110.78) (width 0.25) (layer B.Cu) (net 4))
+  (segment (start 101.75 110.78) (end 102.294 110.236) (width 0.25) (layer B.Cu) (net 4))
+  (segment (start 103.378 111.127998) (end 103.378 111.506) (width 0.25) (layer B.Cu) (net 5))
+  (segment (start 102.25 113.03) (end 102.25 110.999998) (width 0.25) (layer B.Cu) (net 5))
+  (segment (start 102.25 110.999998) (end 102.444999 110.804999) (width 0.25) (layer B.Cu) (net 5))
+  (segment (start 102.444999 110.804999) (end 103.055001 110.804999) (width 0.25) (layer B.Cu) (net 5))
+  (segment (start 103.055001 110.804999) (end 103.378 111.127998) (width 0.25) (layer B.Cu) (net 5))
+  (segment (start 103.632 112.523) (end 103.632 112.014) (width 0.25) (layer B.Cu) (net 6))
+  (segment (start 102.75 113.03) (end 103.125 113.03) (width 0.25) (layer B.Cu) (net 6))
+  (segment (start 103.125 113.03) (end 103.632 112.523) (width 0.25) (layer B.Cu) (net 6))
 
 )
