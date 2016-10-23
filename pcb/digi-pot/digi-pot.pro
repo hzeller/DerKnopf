@@ -1,4 +1,4 @@
-update=Sdag 23. Okt 2016 12:57:16 PDT
+update=Sdag 23. Okt 2016 13:04:36 PDT
 version=1
 last_client=kicad
 [pcbnew]
@@ -58,4 +58,4 @@ LibName26=opto
 LibName27=atmel
 LibName28=contrib
 LibName29=valves
-LibName30=/home/hzeller/src/my/DerKnopf/pcb/library/knopf
+LibName30=../library/knopf
