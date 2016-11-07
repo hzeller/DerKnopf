@@ -5,8 +5,7 @@
 
 #include "i2c_master.h"
 
-//#define F_SCL 100000UL // SCL frequency
-#define F_SCL 50000UL // SCL frequency
+#define F_SCL 100000UL // SCL frequency
 #define Prescaler 1
 #define TWBR_val ((((F_CPU / F_SCL) / Prescaler) - 16 ) / 2)
 

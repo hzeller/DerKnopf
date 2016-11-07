@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <avr/eeprom.h>
 
 #include "quad.h"
 #include "clock.h"
@@ -35,8 +36,31 @@ static inline uint8_t quad_in() { return (QUAD_PORT & QUAD_IN) >> QUAD_SHIFT; }
 static inline bool infrared_in() { return (IR_PORT & IR_IN) != 0; }
 static inline bool button_in() { return (BUTTON_PORT & BUTTON_IN) == 0; }
 
+struct EepromLayout {
+    // The first character sometimes seems to be wiped out in power-glitch
+    // situations; so let's not store anything of interest here.
+    uint8_t dummy;
+
+    uint8_t value;
+    uint8_t is_muted;
+};
+
+// EEPROM layout with some defaults in case we'd want to prepare eeprom flash.
+struct EepromLayout EEMEM ee_data = { 0, 0, 0 };
+
+static char to_hex(unsigned char c) { return c < 0x0a ? c + '0' : c + 'a' - 10; }
+static void printHexByte(SerialCom *out, unsigned char c) {
+    out->write(to_hex((c >> 4) & 0xf));
+    out->write(to_hex((c >> 0) & 0xf));
+
+}
+
+static void PrintString(SerialCom *out, const char *str) {
+    while (*str)
+        out->write(*str++);
+}
 // (lifted from my other project, rc-screen)
-static uint8_t read_infrared(uint8_t *buffer) {
+static uint8_t read_infrared(uint8_t *buffer, SerialCom *com) {
     // The infrared input is default high.
     // A transmission starts with a long low phase (which triggered us to
     // be in this routine in the first place), followed by a sequence of bits
@@ -72,6 +96,7 @@ static uint8_t read_infrared(uint8_t *buffer) {
             *buffer = 0;
         }
     }
+    PrintString(com, "-- done.\r\n");
     return read;
 }
 
@@ -133,12 +158,6 @@ void led_output(uint8_t value, bool on) {
     PORTD = ((on ? 1 : 0) << data.row);
 }
 
-static char to_hex(unsigned char c) { return c < 0x0a ? c + '0' : c + 'a' - 10; }
-static void printHexByte(SerialCom *out, unsigned char c) {
-  out->write(to_hex(c >> 4));
-  out->write(to_hex(c & 0x0f));
-}
-
 void readDigiPotStatus(SerialCom *out) {
     uint8_t p1 = 0, p2 = 0, cnf = 0;
 
@@ -167,46 +186,73 @@ void set_pot_value(uint8_t value, bool muted) {
     }
 }
 
+inline static uint8_t GetEEValue(uint8_t* which) { return eeprom_read_byte(which); }
+inline static uint8_t SetEEValue(uint8_t* which, uint8_t value) {
+  eeprom_write_byte(which, value);
+  return value;
+}
+
 int main() {
     InitLedData();
     Clock::init();
-    SerialCom com;
-    QuadDecoder knob;
-    DebouncedButton button;
-    uint8_t buffer[4];
-    int16_t pot_pos = 0;
-    bool muted = false;
+    i2c_init();
 
     PORTC = IR_IN | BUTTON_IN;
     PORTB = QUAD_IN;  // Pullup.
     PORTD = 0;
 
-    i2c_init();
+    SerialCom com;
+    QuadDecoder knob(quad_in());
+    DebouncedButton button;
+    uint8_t buffer[4];
 
-    int16_t old_pos = 0;
-    com.write('H');
-    com.write('Z');
-    com.write('\n');
+    com.write('S');
+    int16_t pot_pos = GetEEValue(&ee_data.value);
+    bool muted = GetEEValue(&ee_data.is_muted);
 
     if (i2c_start(DIGIPOT_WRITE) == 0) {
         i2c_write(0x86);  // set to 63 step mode.
         i2c_stop();
     }
+    set_pot_value(pot_pos, muted);
+
+    bool change_needs_writing = false;
+    Clock::cycle_t change_needs_writing_start;
+
+    knob.UpdateEnoderState(quad_in());  // Discard first reading.
 
     for (;;) {
-        old_pos = pot_pos;
+        int16_t old_pos = pot_pos;
 
         if (button.DetectEdge(button_in())) {
             muted = !muted;
             old_pos = -1;  // force redraw
         }
 
-        if (infrared_in() && read_infrared(buffer) == 4) {
+        if (!infrared_in() && read_infrared(buffer, &com) == 4) {
+            printHexByte(&com, buffer[0]);
+            printHexByte(&com, buffer[1]);
+            printHexByte(&com, buffer[2]);
+            printHexByte(&com, buffer[3]);
+
+            // The button.
             if (buffer[0] == 'm' && buffer[1] == 'o' && buffer[2] == 'r' && buffer[3] == 'e') {
                 ++pot_pos;
             }
             else if (buffer[0] == 'l' && buffer[1] == 'e' && buffer[2] == 's' && buffer[3] == 's') {
                 --pot_pos;
+            }
+
+            // Using some remote control lying around.
+            if (buffer[0] == 0xe0 && buffer[1] == 0xd5 && buffer[2] == 0x06 && buffer[3] == 0xf9) {
+                ++pot_pos;
+            }
+            else if (buffer[0] == 0xe0 && buffer[1] == 0xd5 && buffer[2] == 0x26 && buffer[3] == 0xd9) {
+                --pot_pos;
+            }
+            else if (buffer[0] == 0xe0 && buffer[1] == 0xd5 && buffer[2] == 0x10 && buffer[3] == 0xef) {
+                muted = !muted;
+                old_pos = -1;
             }
         }
 
@@ -224,9 +270,23 @@ int main() {
             //readDigiPotStatus(&com);
             com.write('\r');
             com.write('\n');
+            change_needs_writing = true;
+            change_needs_writing_start = Clock::now();
         }
 
         bool is_on = !muted || ((Clock::now() & 0x1FFF) < 0xFFF);
         led_output(pot_pos, is_on);
+
+        // Write current setting to eeprom, but only after it has been settled
+        // for a while not to wear out the eeprom.
+        if (change_needs_writing &&
+            (Clock::now() - change_needs_writing_start > Clock::ms_to_cycles(1000))) {
+            SetEEValue(&ee_data.value, pot_pos);
+            SetEEValue(&ee_data.is_muted, muted);
+            com.write('w');
+            com.write('\r');
+            com.write('\n');
+            change_needs_writing = false;
+        }
     }
 }

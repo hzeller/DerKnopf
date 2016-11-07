@@ -8,6 +8,7 @@
 class QuadDecoder {
 public:
   QuadDecoder();
+  QuadDecoder(uint8_t initial_state);
 
   // Given the current external state of the quadratur encoder (two bits),
   // returns if it increased or decreased (+1, -1 or 0).
