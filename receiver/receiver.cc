@@ -1,10 +1,11 @@
 /* -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; -*-
  * Copyright (c) h.zeller@acm.org. GNU public License.
  *
- * Receiver for 'DerKnopf'. Input something like TSOP38238.
- *
- * TODO: switch ISR use from output to input. Instead of using the ISR for motor pulses, we
- * should use it to receive and precisely measure infrared input.
+ * Receiver for 'DerKnopf'.
+ *   - Input something like TSOP38238 for infrared.
+ *   - Also, we have a local rotational quadrature encoder.
+ *   - Output digipot is a DS1882
+ *   - A charlie-plexed LED ring shows the current pos.
  */
 
 #include <stdint.h>
@@ -14,6 +15,8 @@
 
 #include "quad.h"
 #include "clock.h"
+#include "serial-com.h"
+#include "i2c_master.h"
 
 #define IR_PORT PINC
 #define IR_IN (1<<3)
@@ -24,6 +27,9 @@
 
 #define BUTTON_PORT PINC
 #define BUTTON_IN (1<<2)
+
+#define DIGIPOT_READ  0x51
+#define DIGIPOT_WRITE 0x50
 
 static inline uint8_t quad_in() { return (QUAD_PORT & QUAD_IN) >> QUAD_SHIFT; }
 static inline bool infrared_in() { return (IR_PORT & IR_IN) != 0; }
@@ -124,12 +130,47 @@ void InitLedData() {
 void led_output(uint8_t value, bool on) {
     CharlieLookup &data = ledData[value];
     DDRD = (1 << data.row) | (1 << data.col);
-    PORTD = (PORTD & 0b11) | ((on ? 1 : 0) << data.row);
+    PORTD = ((on ? 1 : 0) << data.row);
+}
+
+static char to_hex(unsigned char c) { return c < 0x0a ? c + '0' : c + 'a' - 10; }
+static void printHexByte(SerialCom *out, unsigned char c) {
+  out->write(to_hex(c >> 4));
+  out->write(to_hex(c & 0x0f));
+}
+
+void readDigiPotStatus(SerialCom *out) {
+    uint8_t p1 = 0, p2 = 0, cnf = 0;
+
+    if (i2c_start(DIGIPOT_READ) != 0)
+        return;
+
+    p1  = i2c_read_ack();
+    p2  = i2c_read_ack();
+    cnf = i2c_read_nack();
+    i2c_stop();
+
+    out->write('P');
+    printHexByte(out, p1); out->write(',');
+    printHexByte(out, p2); out->write(':');
+    printHexByte(out, cnf);
+}
+
+void set_pot_value(uint8_t value, bool muted) {
+    // Value can be 0..29. The DS1882 has a range 0..63 with the
+    // highest value being the most attenuation.
+    uint8_t wiper = (muted || value == 0) ? 63 : 58 - (2*value);
+    if (i2c_start(DIGIPOT_WRITE) == 0) {
+        i2c_write((0 << 6) | wiper);
+        i2c_write((1 << 6) | wiper);
+        i2c_stop();
+    }
 }
 
 int main() {
     InitLedData();
     Clock::init();
+    SerialCom com;
     QuadDecoder knob;
     DebouncedButton button;
     uint8_t buffer[4];
@@ -138,10 +179,26 @@ int main() {
 
     PORTC = IR_IN | BUTTON_IN;
     PORTB = QUAD_IN;  // Pullup.
+    PORTD = 0;
+
+    i2c_init();
+
+    int16_t old_pos = 0;
+    com.write('H');
+    com.write('Z');
+    com.write('\n');
+
+    if (i2c_start(DIGIPOT_WRITE) == 0) {
+        i2c_write(0x86);  // set to 63 step mode.
+        i2c_stop();
+    }
 
     for (;;) {
+        old_pos = pot_pos;
+
         if (button.DetectEdge(button_in())) {
             muted = !muted;
+            old_pos = -1;  // force redraw
         }
 
         if (infrared_in() && read_infrared(buffer) == 4) {
@@ -157,6 +214,18 @@ int main() {
 
         if (pot_pos < 0) pot_pos = 0;
         if (pot_pos > 29) pot_pos = 29;
+
+        if (old_pos != pot_pos) {
+            set_pot_value(pot_pos, muted);
+            com.write((pot_pos / 10) + '0');
+            com.write((pot_pos % 10) + '0');
+            if (muted) { com.write(' '); com.write('M'); }
+            com.write(' ');
+            //readDigiPotStatus(&com);
+            com.write('\r');
+            com.write('\n');
+        }
+
         bool is_on = !muted || ((Clock::now() & 0x1FFF) < 0xFFF);
         led_output(pot_pos, is_on);
     }
