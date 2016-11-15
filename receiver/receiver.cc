@@ -235,12 +235,16 @@ int main() {
             printHexByte(&com, buffer[2]);
             printHexByte(&com, buffer[3]);
 
-            // The button.
+            // Our sender.
             if (buffer[0] == 'm' && buffer[1] == 'o' && buffer[2] == 'r' && buffer[3] == 'e') {
                 ++pot_pos;
             }
             else if (buffer[0] == 'l' && buffer[1] == 'e' && buffer[2] == 's' && buffer[3] == 's') {
                 --pot_pos;
+            }
+            else if (buffer[0] == 'b' && buffer[1] == '_' && buffer[2] == 'o' && buffer[3] == 'n') {
+                muted = !muted;
+                old_pos = -1;
             }
 
             // Using some remote control lying around.
