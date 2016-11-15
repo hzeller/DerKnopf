@@ -8,6 +8,8 @@
  *   - A charlie-plexed LED ring shows the current pos.
  */
 
+#define DO_SERIAL_COM 0
+
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -16,8 +18,13 @@
 
 #include "quad.h"
 #include "clock.h"
-#include "serial-com.h"
 #include "i2c_master.h"
+
+#if DO_SERIAL_COM
+#  include "serial-com.h"
+#else
+typedef void SerialCom;
+#endif
 
 #define IR_PORT PINC
 #define IR_IN (1<<3)
@@ -32,8 +39,11 @@
 #define DIGIPOT_READ  0x51
 #define DIGIPOT_WRITE 0x50
 
-// If histogram shift is defined, we spit out a histogram.
-#define HISTOGRAM_SHIFT 3
+// If histogram shift is defined, we spit out a histogram. And it only makes
+// sense if we do serial.
+#if DO_SERIAL_COM
+#  define HISTOGRAM_SHIFT 3
+#endif
 
 static inline uint8_t quad_in() { return (QUAD_PORT & QUAD_IN) >> QUAD_SHIFT; }
 static inline bool infrared_in() { return (IR_PORT & IR_IN) != 0; }
@@ -53,17 +63,19 @@ struct EepromLayout EEMEM ee_data = { 0, 0, 0 };
 
 static uint8_t histogram[255];
 
+#if DO_SERIAL_COM
 static char to_hex(unsigned char c) { return c < 0x0a ? c + '0' : c + 'a' - 10; }
 static void printHexByte(SerialCom *out, unsigned char c) {
     out->write(to_hex((c >> 4) & 0xf));
     out->write(to_hex((c >> 0) & 0xf));
 
 }
-
 static void PrintString(SerialCom *out, const char *str) {
     while (*str)
         out->write(*str++);
 }
+#endif
+
 // (lifted from my other project, rc-screen)
 static uint8_t read_infrared(uint8_t *buffer, SerialCom *com) {
     // The infrared input is default high.
@@ -195,6 +207,7 @@ void led_output(uint8_t value, bool on) {
     PORTD = ((on ? 1 : 0) << data.row);
 }
 
+#if DO_SERIAL_COM
 void readDigiPotStatus(SerialCom *out) {
     uint8_t p1 = 0, p2 = 0, cnf = 0;
 
@@ -211,6 +224,7 @@ void readDigiPotStatus(SerialCom *out) {
     printHexByte(out, p2); out->write(':');
     printHexByte(out, cnf);
 }
+#endif
 
 void set_pot_value(uint8_t value, bool muted) {
     // Value can be 0..29. The DS1882 has a range 0..63 with the
@@ -238,12 +252,15 @@ int main() {
     PORTB = QUAD_IN;  // Pullup.
     PORTD = 0;
 
+#if DO_SERIAL_COM
     SerialCom com;
+#else
+    int com; // dummy to pass pointers.
+#endif
     QuadDecoder knob(quad_in());
     DebouncedButton button;
     uint8_t buffer[4];
 
-    com.write('S');
     int16_t pot_pos = GetEEValue(&ee_data.value);
     bool muted = GetEEValue(&ee_data.is_muted);
 
@@ -301,6 +318,7 @@ int main() {
 
         if (old_pos != pot_pos) {
             set_pot_value(pot_pos, muted);
+#if DO_SERIAL_COM
             com.write((pot_pos / 10) + '0');
             com.write((pot_pos % 10) + '0');
             if (muted) { com.write(' '); com.write('M'); }
@@ -308,6 +326,7 @@ int main() {
             //readDigiPotStatus(&com);
             com.write('\r');
             com.write('\n');
+#endif
             change_needs_writing = true;
             change_needs_writing_start = Clock::now();
         }
@@ -321,9 +340,11 @@ int main() {
             (Clock::now() - change_needs_writing_start > Clock::ms_to_cycles(1000))) {
             SetEEValue(&ee_data.value, pot_pos);
             SetEEValue(&ee_data.is_muted, muted);
+#if DO_SERIAL_COM
             com.write('w');
             com.write('\r');
             com.write('\n');
+#endif
             change_needs_writing = false;
         }
     }

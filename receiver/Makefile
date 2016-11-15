@@ -6,13 +6,14 @@ DEFINES=-DF_CPU=8000000UL -DSERIAL_BAUDRATE=38400
 TARGET_ARCH=-mmcu=atmega8
 CC=avr-gcc
 CXX=avr-g++
-CXXFLAGS=-Os -g -W -Wall -ffunction-sections -fdata-sections -mcall-prologues $(DEFINES)
+CXXFLAGS=-Os -g -W -Wall -Wno-unused-parameter -ffunction-sections -fdata-sections -mcall-prologues $(DEFINES)
 CFLAGS=$(CXXFLAGS) -std=c99
 AVRDUDE_DEVICE ?= /dev/ttyUSB0
 AVRDUDE     = avrdude -p m8 -c stk500v2 -P $(AVRDUDE_DEVICE)
 FLASH_CMD   = $(AVRDUDE) -e -U flash:w:main.hex
 LINK=avr-g++ -g $(TARGET_ARCH) -Wl,-gc-sections
-OBJECTS=receiver.o quad.o serial-com.o i2c_master.o
+#OBJECTS=receiver.o quad.o serial-com.o i2c_master.o
+OBJECTS=receiver.o quad.o i2c_master.o
 
 all : main.hex
 
