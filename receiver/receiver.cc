@@ -32,6 +32,9 @@
 #define DIGIPOT_READ  0x51
 #define DIGIPOT_WRITE 0x50
 
+// If histogram shift is defined, we spit out a histogram.
+#define HISTOGRAM_SHIFT 3
+
 static inline uint8_t quad_in() { return (QUAD_PORT & QUAD_IN) >> QUAD_SHIFT; }
 static inline bool infrared_in() { return (IR_PORT & IR_IN) != 0; }
 static inline bool button_in() { return (BUTTON_PORT & BUTTON_IN) == 0; }
@@ -47,6 +50,8 @@ struct EepromLayout {
 
 // EEPROM layout with some defaults in case we'd want to prepare eeprom flash.
 struct EepromLayout EEMEM ee_data = { 0, 0, 0 };
+
+static uint8_t histogram[255];
 
 static char to_hex(unsigned char c) { return c < 0x0a ? c + '0' : c + 'a' - 10; }
 static void printHexByte(SerialCom *out, unsigned char c) {
@@ -73,9 +78,15 @@ static uint8_t read_infrared(uint8_t *buffer, SerialCom *com) {
     *buffer = 0;
 
     // manual measurment.
-    const unsigned short lo_hi_bit_threshold = 0x01CE;
+    //const unsigned short lo_hi_bit_threshold = 0x01CE;
+    const unsigned short lo_hi_bit_threshold = 0x0318;
     const unsigned short end_of_signal = 10 * lo_hi_bit_threshold;
     unsigned short count = 0;
+
+#ifdef HISTOGRAM_SHIFT
+    const uint8_t* print_buffer = buffer;
+    uint8_t divider = lo_hi_bit_threshold >> HISTOGRAM_SHIFT;
+#endif
 
     while (read < 4) {
         while (!infrared_in()) {}  // skip low phase, wait for high.
@@ -86,6 +97,13 @@ static uint8_t read_infrared(uint8_t *buffer, SerialCom *com) {
         if (count > lo_hi_bit_threshold) {
             *buffer |= current_bit;
         }
+
+#ifdef HISTOGRAM_SHIFT
+        count >>= HISTOGRAM_SHIFT;
+        if (count > 255) count = 255;
+        histogram[count]++;
+#endif
+
         current_bit >>= 1;
         if (!current_bit) {
             current_bit = 0x80;
@@ -96,7 +114,26 @@ static uint8_t read_infrared(uint8_t *buffer, SerialCom *com) {
             *buffer = 0;
         }
     }
-    PrintString(com, "-- done.\r\n");
+#ifdef HISTOGRAM_SHIFT
+    PrintString(com, "hist: [");
+    for (int i = 0; i < 255; ++i) {
+        if (i == divider) {
+            com->write('|');
+        }
+        if (histogram[i]) {
+            printHexByte(com, i);
+            com->write(':');
+            printHexByte(com, histogram[i]);
+            com->write(' ');
+        }
+    }
+    PrintString(com, "]");
+    printHexByte(com, print_buffer[0]);
+    printHexByte(com, print_buffer[1]);
+    printHexByte(com, print_buffer[2]);
+    printHexByte(com, print_buffer[3]);
+    PrintString(com, "\r\n");
+#endif
     return read;
 }
 
@@ -230,11 +267,6 @@ int main() {
         }
 
         if (!infrared_in() && read_infrared(buffer, &com) == 4) {
-            printHexByte(&com, buffer[0]);
-            printHexByte(&com, buffer[1]);
-            printHexByte(&com, buffer[2]);
-            printHexByte(&com, buffer[3]);
-
             // Our sender.
             if (buffer[0] == 'm' && buffer[1] == 'o' && buffer[2] == 'r' && buffer[3] == 'e') {
                 ++pot_pos;
@@ -259,6 +291,8 @@ int main() {
                 old_pos = -1;
             }
         }
+
+        for (int i = 0; i < 255; ++i) histogram[i] = 0;
 
         pot_pos += knob.UpdateEnoderState(quad_in());
 
