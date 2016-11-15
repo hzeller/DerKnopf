@@ -2,11 +2,11 @@
 ##
 
 DEFINES=-DF_CPU=4000000UL
-TARGET_ARCH=-mmcu=attiny24
+TARGET_ARCH=-mmcu=attiny44
 CXX=avr-g++
-CXXFLAGS=-Os -g -W -Wall -ffunction-sections -fdata-sections -fshort-enums $(DEFINES)
+CXXFLAGS=-O3 -g -W -Wall -ffunction-sections -fdata-sections -fshort-enums $(DEFINES)
 AVRDUDE_DEVICE ?= /dev/ttyUSB0
-AVRDUDE     = avrdude -p attiny24 -c stk500v2 -P $(AVRDUDE_DEVICE)
+AVRDUDE     = avrdude -p attiny44 -c stk500v2 -P $(AVRDUDE_DEVICE)
 FLASH_CMD   = $(AVRDUDE) -e -U flash:w:main.hex
 LINK=avr-g++ -g $(TARGET_ARCH) -Wl,-gc-sections
 OBJECTS=transmitter.o quad.o
@@ -39,12 +39,12 @@ clean:
 	rm -f $(OBJECTS) main.elf main.hex
 
 # Documentation page references from
-# http://www.atmel.com/images/atmel-2486-8-bit-avr-microcontroller-atmega8_l_datasheet.pdf / pp 216-217 are interesting.
+# attiny24/44 documentation, page 160
 # internal oscillator.
 ### Fuse high byte:
 # 7 rstdisbl	1   disable external reset: disabled (i.e.: reset enabled).
 # 6 dwen        1   debug wire enable
-# 5 spien	0   serial programming: enabled.
+# 5 spien	0   SPI programming: enabled.
 # 4 wdton	1   don't need watchdog. Save power.
 #
 # 3 eesave      0   save eeprom on chip erase: disabled (we don't use eeprom)
@@ -55,12 +55,12 @@ clean:
 ### low byte:
 # 7 chkdiv8	0   Default division by 8 (needed as we op with 3V)
 # 6 ckout       1   clock out (no)
-# 5 sut1	1-+ slow rising power (page 30)
+# 5 sut1	0-+ fast startup to react on interrupts quickly (page 27)
 # 4 sut0	0/
 #
 # 3 cksel3	0\
-# 2 cksel2	0 + internal RC oscillator (8Mhz)
+# 2 cksel2	0 + internal RC oscillator (8Mhz) page 27
 # 1 cksel1	1 |
 # 0 cksel0	0/
 fuse:
-	$(AVRDUDE) -U hfuse:w:0xd7:m -U lfuse:w:0x62:m
+	$(AVRDUDE) -U hfuse:w:0xd7:m -U lfuse:w:0x42:m
