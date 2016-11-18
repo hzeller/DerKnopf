@@ -16,16 +16,15 @@
 
 #include "quad.h"
 
-#define DO_TIMER_COMPARE 0
-
 // Do direct pullup for the quad encoder. However, these are relatively low
 // values in the AVR, so if this is set to 0, then we use higher value 1MOhm
 // pullups on the board.
 #define ROT_DIRECT_PULLUP 1
 
-// we want to sleep after transmit. Does not work yet, as we need to connect
-// INT0
-#define SLEEP_AFTER_TRANSMIT 0
+// After we transmitted go back to power-off sleep until someone wakes us with
+// a level change (button press or rotation). We only use 0.1 Microampere while
+// in that mode.
+#define SLEEP_AFTER_TRANSMIT 1
 
 // We need to fudge up the frequency a bit because the RC oscillator runs
 // a little slower at 3V.
@@ -51,7 +50,7 @@
 #define ROT_PULLUP_A (1<<5)
 #define ROT_PULLUP_B (1<<6)
 #define ROT_INTR1     PCINT7
-#define ROT_INTR2     PCINT7
+#define ROT_INTR2     PCINT3
 
 #define BUT_PORT_IN   PINB
 #define BUT_PORT_OUT  PORTB
@@ -93,12 +92,7 @@ void Send(uint32_t value) {
     OCR0A = CLOCK_COUNTER;
     IR_OUT_PORT |= IR_DEBUG_BIT;
     TCNT0 = 0;
-#if DO_TIMER_COMPARE
-    TCCR0A = ((1<<WGM01)   // OCRA compare. p.83
-              | (1<<COM0A0)); // Toggle OC0A on compare match
-#else
     TCCR0A = (1<<WGM01);   // OCRA compare. p.83
-#endif
     TIMSK0 |= (1<<OCIE0A);  // Go
 }
 
@@ -141,33 +135,21 @@ void advanceStateBottomHalf() {
         send_state = BIT_BURST;
         countdown = IR_BURST_LEN;
         current_bit >>= 1;
-#if DO_TIMER_COMPARE
-        TCCR0A = ((1<<WGM01)   // OCRA compare. p.83
-                  | (1<<COM0A0)); // Toggle OC0A on compare match
-#endif
-
     }
 }
 
 ISR(TIM0_COMPA_vect) {
-#if DO_TIMER_COMPARE
-    if (countdown == 0) {
-        TCCR0A = (1<<WGM01);   // OCRA compare. p.83
-        IR_OUT_PORT &= ~(IR_OUT_BIT);
-        return;
-    }
-#else
     if (countdown == 0)
         return;
     if (send_state == BIT_BURST) {
         IR_OUT_PORT ^= IR_OUT_BIT;
     } // else we're in a pause-phase.
-#endif
     --countdown;
 }
 
 // Pin change interrupt. Dummy in the interrupt vector to wake up.
 EMPTY_INTERRUPT(PCINT0_vect);
+EMPTY_INTERRUPT(PCINT1_vect);
 
 static bool is_button_pressed() { return (BUT_PORT_IN & BUT_BIT) == 0; }
 static inline uint8_t rot_status() {
@@ -190,7 +172,8 @@ int main() {
     ROT_PORT_OUT |= (ROT_PULLUP_A | ROT_PULLUP_B);   // extra pullups.
 
     // The pins we are interested in when PCIE0 is on. Page 49.
-    //PCMSK0 =(1<<ROT_INTR1)|(1<<ROT_INTR2)|(1<<BUT_INTR);
+    PCMSK0 =(1<<ROT_INTR1)|(1<<ROT_INTR2)|(1<<BUT_INTR);
+    PCMSK1 =(1<<BUT_INTR);
 
     TCCR0B = (1<<CS00);     // timer 0: no prescaling p.84
 
@@ -228,7 +211,7 @@ int main() {
 #if SLEEP_AFTER_TRANSMIT
         if (PollIsSendingDone()) {
             cli();
-            GIMSK |= (1<<PCIE0);          // Interrupt on change anywhere 0:7
+            GIMSK |= (1<<PCIE0)|(1<<PCIE1);          // level change interrupt
             set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 
             sleep_enable();
