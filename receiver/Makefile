@@ -3,7 +3,7 @@
 
 DEFINES=-DF_CPU=8000000UL -DSERIAL_BAUDRATE=38400
 
-TARGET_ARCH=-mmcu=atmega8
+TARGET_ARCH=-mmcu=attiny48
 CC=avr-gcc
 CXX=avr-g++
 CXXFLAGS=-Os -g -W -Wall -Wno-unused-parameter -ffunction-sections -fdata-sections -mcall-prologues $(DEFINES)

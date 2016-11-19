@@ -23,18 +23,21 @@
 #if DO_SERIAL_COM
 #  include "serial-com.h"
 #else
-typedef void SerialCom;
+typedef int SerialCom;  // dummy type.
 #endif
 
-#define IR_PORT PINC
-#define IR_IN (1<<3)
+#define IR_PORT_IN  PIND
+#define IR_PORT_OUT PORTD
+#define IR_IN       (1<<3)
 
-#define QUAD_PORT PINB
-#define QUAD_SHIFT 6
-#define QUAD_IN (3<<QUAD_SHIFT)
+#define QUAD_PORT_IN  PINB
+#define QUAD_PORT_OUT PORTB
+#define QUAD_SHIFT    6
+#define QUAD_IN       (3<<QUAD_SHIFT)
 
-#define BUTTON_PORT PINC
-#define BUTTON_IN (1<<2)
+#define BUTTON_PORT_IN  PINA
+#define BUTTON_PORT_OUT PORTA
+#define BUTTON_IN       (1<<2)
 
 #define DIGIPOT_READ  0x51
 #define DIGIPOT_WRITE 0x50
@@ -45,9 +48,11 @@ typedef void SerialCom;
 #  define HISTOGRAM_SHIFT 3
 #endif
 
-static inline uint8_t quad_in() { return (QUAD_PORT & QUAD_IN) >> QUAD_SHIFT; }
-static inline bool infrared_in() { return (IR_PORT & IR_IN) != 0; }
-static inline bool button_in() { return (BUTTON_PORT & BUTTON_IN) == 0; }
+static inline uint8_t quad_in() {
+    return (QUAD_PORT_IN & QUAD_IN) >> QUAD_SHIFT;
+}
+static inline bool infrared_in() { return (IR_PORT_IN & IR_IN) != 0; }
+static inline bool button_in() { return (BUTTON_PORT_IN & BUTTON_IN) == 0; }
 
 struct EepromLayout {
     // The first character sometimes seems to be wiped out in power-glitch
@@ -207,26 +212,14 @@ void led_output(uint8_t value, bool on) {
     PORTD = ((on ? 1 : 0) << data.row);
 }
 
-#if DO_SERIAL_COM
-void readDigiPotStatus(SerialCom *out) {
-    uint8_t p1 = 0, p2 = 0, cnf = 0;
-
-    if (i2c_start(DIGIPOT_READ) != 0)
-        return;
-
-    p1  = i2c_read_ack();
-    p2  = i2c_read_ack();
-    cnf = i2c_read_nack();
-    i2c_stop();
-
-    out->write('P');
-    printHexByte(out, p1); out->write(',');
-    printHexByte(out, p2); out->write(':');
-    printHexByte(out, cnf);
+void ds1882_init() {
+    if (i2c_start(DIGIPOT_WRITE) == 0) {
+        i2c_write(0x86);  // set to 63 step mode.
+        i2c_stop();
+    }
 }
-#endif
 
-void set_pot_value(uint8_t value, bool muted) {
+void ds1882_set_pot_value(uint8_t value, bool muted) {
     // Value can be 0..29. The DS1882 has a range 0..63 with the
     // highest value being the most attenuation.
     uint8_t wiper = (muted || value == 0) ? 63 : 58 - (2*value);
@@ -247,28 +240,22 @@ int main() {
     InitLedData();
     Clock::init();
     i2c_init();
+    ds1882_init();
 
-    PORTC = IR_IN | BUTTON_IN;
-    PORTB = QUAD_IN;  // Pullup.
-    PORTD = 0;
+    // Set pullups.
+    IR_PORT_OUT |= IR_IN;
+    BUTTON_PORT_OUT |= BUTTON_IN;
+    QUAD_PORT_OUT |= QUAD_IN;
 
-#if DO_SERIAL_COM
     SerialCom com;
-#else
-    int com; // dummy to pass pointers.
-#endif
     QuadDecoder knob(quad_in());
     DebouncedButton button;
     uint8_t buffer[4];
 
+    // Set initial values we have kept in EEPROM
     int16_t pot_pos = GetEEValue(&ee_data.value);
     bool muted = GetEEValue(&ee_data.is_muted);
-
-    if (i2c_start(DIGIPOT_WRITE) == 0) {
-        i2c_write(0x86);  // set to 63 step mode.
-        i2c_stop();
-    }
-    set_pot_value(pot_pos, muted);
+    ds1882_set_pot_value(pot_pos, muted);
 
     bool change_needs_writing = false;
     Clock::cycle_t change_needs_writing_start;
@@ -317,13 +304,12 @@ int main() {
         if (pot_pos > 29) pot_pos = 29;
 
         if (old_pos != pot_pos) {
-            set_pot_value(pot_pos, muted);
+            ds1882_set_pot_value(pot_pos, muted);
 #if DO_SERIAL_COM
             com.write((pot_pos / 10) + '0');
             com.write((pot_pos % 10) + '0');
             if (muted) { com.write(' '); com.write('M'); }
             com.write(' ');
-            //readDigiPotStatus(&com);
             com.write('\r');
             com.write('\n');
 #endif
