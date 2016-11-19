@@ -1,16 +1,12 @@
-Remote controlled volume knob motor
-===================================
+Remote controlled volume knob
+=============================
 
-Work in progress.
+A project to upgrade an amplifier without remote control to one with.
 
-Input is a rotational encoder, output a stepmotor.
+Replacing a regular potentiometer with a DS1882 and a rotational encoder.
+Visual feedback with a charlie-plexed LED ring.
 
-And before you ask why not a servo ?
-Compared to a servo, a stepmotor has the advantage that
-it can be set freely moving when not being actively turned.
+The interesting part is the infrared remote control: another rotational encoder,
+with an infrared transmitter: a wireless extension of the volume knob.
 
-https://plus.google.com/u/0/+HennerZeller/posts/gBbGFKPtCiZ
-
-![Test-setup] [setup]
-
-[setup]: ./img/derknopf.jpg
+(Work in progress; come here for pictures etc. later)
