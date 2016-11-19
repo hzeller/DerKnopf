@@ -24,6 +24,7 @@
 #  include "serial-com.h"
 #else
 typedef int SerialCom;  // dummy type.
+// TODO: a version that sends via SPI
 #endif
 
 #define IR_PORT_IN  PIND
@@ -66,9 +67,8 @@ struct EepromLayout {
 // EEPROM layout with some defaults in case we'd want to prepare eeprom flash.
 struct EepromLayout EEMEM ee_data = { 0, 0, 0 };
 
-static uint8_t histogram[255];
-
 #if DO_SERIAL_COM
+static uint8_t histogram[255];
 static char to_hex(unsigned char c) { return c < 0x0a ? c + '0' : c + 'a' - 10; }
 static void printHexByte(SerialCom *out, unsigned char c) {
     out->write(to_hex((c >> 4) & 0xf));
@@ -198,9 +198,8 @@ void InitLedData() {
         col = 5 - col;
 #endif
 
-        static const int shifted = 2;
-        row += shifted;
-        col += shifted;
+        if (row > 2) row += 2;
+        if (col > 2) col += 2;
         ledData[i].row = row;
         ledData[i].col = col;
     }
@@ -255,6 +254,12 @@ int main() {
     // Set initial values we have kept in EEPROM
     int16_t pot_pos = GetEEValue(&ee_data.value);
     bool muted = GetEEValue(&ee_data.is_muted);
+
+    // Default EEPROM value is 0xff the first time we power up. Make sure
+    // we're in range.
+    if (pot_pos < 0 || pot_pos > 29)
+        pot_pos = 0;
+
     ds1882_set_pot_value(pot_pos, muted);
 
     bool change_needs_writing = false;
@@ -296,7 +301,9 @@ int main() {
             }
         }
 
+#if DO_SERIAL_COM && defined(HISTOGRAM_SHIFT)
         for (int i = 0; i < 255; ++i) histogram[i] = 0;
+#endif
 
         pot_pos += knob.UpdateEnoderState(quad_in());
 
