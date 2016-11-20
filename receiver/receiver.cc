@@ -50,7 +50,8 @@ typedef int SerialCom;  // dummy type.
 #endif
 
 static inline uint8_t quad_in() {
-    return (QUAD_PORT_IN & QUAD_IN) >> QUAD_SHIFT;
+    // Flipping one bit as we get the signal in the wrong sequence.
+    return ((QUAD_PORT_IN & QUAD_IN) >> QUAD_SHIFT) ^ 0b01;
 }
 static inline bool infrared_in() { return (IR_PORT_IN & IR_IN) != 0; }
 static inline bool button_in() { return (BUTTON_PORT_IN & BUTTON_IN) == 0; }
