@@ -39,9 +39,9 @@ which 30 are used (to have a 'gap' between min and max like in a regular pot).
 Microcontroller: Attiny48.
 Runs on +5V (digital processing) and +/-6V (Analog).
 
-Bottom                      | Shallow side view
-----------------------------|----------------------------|
-![](img/receiver-bottom.jpg) (This early revision required some bodge resistors)|![](img/receiver-shallow-side.jpg)|
+Render                      |  Bottom                      | Shallow side view
+----------------------------|------------------------------|----------------------------|
+![](img/digi-pot-render.png)|![](img/receiver-bottom.jpg) (This early revision required some bodge resistors)|![](img/receiver-shallow-side.jpg)|
 
 
 # LED Ring
