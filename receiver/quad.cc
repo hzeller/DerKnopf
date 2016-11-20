@@ -6,15 +6,15 @@ enum {
   STATE_01   = 0b01,
   STATE_10   = 0b10,
   STATE_11   = 0b11,
-  INIT_STATE = 4
 };
 
-QuadDecoder::QuadDecoder(uint8_t initial_state) : current_state_(initial_state) {}
-QuadDecoder::QuadDecoder() : current_state_(INIT_STATE) {}
+QuadDecoder::QuadDecoder(uint8_t initial_state)
+  : current_state_(initial_state & 0b11) {
+}
 
 // An encoder that creates one quad step per detent
 int8_t QuadDecoder::UpdateEnoderState(uint8_t encoder_bits) {
-  // assert((encoder_bits & STATE_11) == encoder_bits);
+  encoder_bits &= 0b11;
   // self transitions, skipping states or transition from init always dir=0
   int8_t direction = 0;
   switch (current_state_) {  // essentially difference of gray encoding.

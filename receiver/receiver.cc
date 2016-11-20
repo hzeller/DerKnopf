@@ -266,7 +266,13 @@ int main() {
     bool change_needs_writing = false;
     Clock::cycle_t change_needs_writing_start;
 
-    knob.UpdateEnoderState(quad_in());  // Discard first reading.
+    // The optical encoder needs some settle-time it seems. Discard changes
+    // until we see 100ms of no change.
+    Clock::cycle_t last_encoder_change = Clock::now();
+    while (Clock::now() - last_encoder_change < Clock::ms_to_cycles(100)) {
+        if (knob.UpdateEnoderState(quad_in()) != 0)
+            last_encoder_change = Clock::now();
+    }
 
     for (;;) {
         int16_t old_pos = pot_pos;
