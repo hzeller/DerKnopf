@@ -219,10 +219,18 @@ void ds1882_init() {
     }
 }
 
+uint8_t value_mapping[30] = {
+    0,  1, 2, 3, 4, 5,   // 1 step.
+    7,  9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 31, 33, 35, 37, 39,  // 2 step.
+    42, 45, 48, 51, 54, 57, 60, 63  // 3 step.
+};
 void ds1882_set_pot_value(uint8_t value, bool muted) {
+    if (muted) value = 0;
+
     // Value can be 0..29. The DS1882 has a range 0..63 with the
     // highest value being the most attenuation.
-    uint8_t wiper = (muted || value == 0) ? 63 : 58 - (2*value);
+    uint8_t wiper = 63 - value_mapping[value];
+
     if (i2c_start(DIGIPOT_WRITE) == 0) {
         i2c_write((0 << 6) | wiper);
         i2c_write((1 << 6) | wiper);
@@ -291,18 +299,6 @@ int main() {
                 --pot_pos;
             }
             else if (buffer[0] == 'b' && buffer[1] == '_' && buffer[2] == 'o' && buffer[3] == 'n') {
-                muted = !muted;
-                old_pos = -1;
-            }
-
-            // Using some remote control lying around.
-            if (buffer[0] == 0xe0 && buffer[1] == 0xd5 && buffer[2] == 0x06 && buffer[3] == 0xf9) {
-                ++pot_pos;
-            }
-            else if (buffer[0] == 0xe0 && buffer[1] == 0xd5 && buffer[2] == 0x26 && buffer[3] == 0xd9) {
-                --pot_pos;
-            }
-            else if (buffer[0] == 0xe0 && buffer[1] == 0xd5 && buffer[2] == 0x10 && buffer[3] == 0xef) {
                 muted = !muted;
                 old_pos = -1;
             }
