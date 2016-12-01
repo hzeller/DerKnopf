@@ -69,4 +69,8 @@ Render                       | Real
 -----------------------------|----------------------
 ![](img/led-ring-render.png) | ![](img/led-ring.jpg)
 
+### Mounted on Amplifier
+
+![](img/on-device.jpg)
+
 [DS1882]: https://datasheets.maximintegrated.com/en/ds/DS1882.pdf
