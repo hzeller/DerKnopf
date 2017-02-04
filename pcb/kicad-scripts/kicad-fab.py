@@ -3,6 +3,7 @@
 '''
 
 import sys
+import os
 
 from pcbnew import *
 filename=sys.argv[1]
@@ -39,19 +40,19 @@ popt.SetSubtractMaskFromSilk(False)
 # Create filenames in a way that if they are sorted alphabetically, they
 # are shown in exactly the layering the board would look like. So
 #   gerbv *
-# just makes sense.
+# just makes sense
 plot_plan = [
-    ( Edge_Cuts, "0-EdgeCuts",    "Edges" ),
+    ( Edge_Cuts, "1-EdgeCuts",    "Edges" ),
 
-    ( F_Paste,   "1-PasteTop",    "Paste top" ),
-    ( F_SilkS,   "2-SilkTop",     "Silk top" ),
-    ( F_Mask,    "3-MaskTop",     "Mask top" ),
+    ( F_Paste,   "2-PasteTop",    "Paste top" ),
+    ( F_SilkS,   "3-SilkTop",     "Silk top" ),
     ( F_Cu,      "4-CuTop",       "Top layer" ),
+    ( F_Mask,    "5-MaskTop",     "Mask top" ),
 
-    ( B_Cu,      "5-CuBottom",    "Bottom layer" ),
     ( B_Mask,    "6-MaskBottom",  "Mask bottom" ),
-    ( B_SilkS,   "7-SilkBottom",  "Silk top" ),
-    ( B_Paste,   "8-PasteBottom", "Paste Bottom" ),
+    ( B_Cu,      "7-CuBottom",    "Bottom layer" ),
+    ( B_SilkS,   "8-SilkBottom",  "Silk top" ),
+    ( B_Paste,   "9-PasteBottom", "Paste Bottom" ),
 ]
 
 
@@ -72,7 +73,7 @@ drlwriter.SetMapFileFormat( PLOT_FORMAT_PDF )
 mirror = False
 minimalHeader = False
 offset = wxPoint(0,0)
-mergeNPTH = True
+mergeNPTH = True   # non-plated through-hole
 drlwriter.SetOptions( mirror, minimalHeader, offset, mergeNPTH )
 
 metricFmt = True
@@ -81,3 +82,10 @@ drlwriter.SetFormat( metricFmt )
 genDrl = True
 genMap = True
 drlwriter.CreateDrillandMapFilesSet( plotDir, genDrl, genMap );
+
+# We can't give just the filename for the name of the drill file at generation
+# time, but we do want its name to be a bit different to show up on top.
+# So this is an ugly hack to rename the drl-file to have a 0 in the beginning.
+base_name = filename[:-10]
+print plotDir + base_name + ".drl"
+os.rename(plotDir + base_name + ".drl", plotDir + base_name + "-0.drl")
