@@ -44,15 +44,15 @@ popt.SetSubtractMaskFromSilk(False)
 plot_plan = [
     ( Edge_Cuts, "1-EdgeCuts",    "Edges" ),
 
-    ( F_Paste,   "2-PasteTop",    "Paste top" ),
-    ( F_SilkS,   "3-SilkTop",     "Silk top" ),
+    ( F_SilkS,   "2-SilkTop",     "Silk top" ),
+    ( F_Paste,   "3-PasteTop",    "Paste top" ),
     ( F_Cu,      "4-CuTop",       "Top layer" ),
     ( F_Mask,    "5-MaskTop",     "Mask top" ),
 
     ( B_Mask,    "6-MaskBottom",  "Mask bottom" ),
     ( B_Cu,      "7-CuBottom",    "Bottom layer" ),
-    ( B_SilkS,   "8-SilkBottom",  "Silk top" ),
-    ( B_Paste,   "9-PasteBottom", "Paste Bottom" ),
+    ( B_Paste,   "8-PasteBottom", "Paste Bottom" ),
+    ( B_SilkS,   "9-SilkBottom",  "Silk top" ),
 ]
 
 
