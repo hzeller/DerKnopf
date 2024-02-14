@@ -2,3 +2,14 @@
 *.o
 *.elf
 *.hex
+
+*.kicad_prl
+fp-info-cache
+_autosave-*
+*-backups/
+
+fab/
+*-fab.zip
+
+.envrc
+.direnv/
