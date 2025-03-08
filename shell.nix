@@ -6,12 +6,16 @@
 pkgs.mkShell {
   buildInputs = with pkgs;
     [
+      # PCB tools
       kicad
-      pkgsCross.avr.buildPackages.gcc8
-      avrdude
-      python311Packages.kicad
+      python3Packages.kicad  # Generate gerbers
       python3
-      zip
-      git   # to tag the pcb versions.
+      gerbv
+      git     # to tag the pcb versions.
+      zip     # pack gerbers
+
+      # Firmware
+      pkgsCross.avr.buildPackages.gcc9
+      avrdude
     ];
 }
